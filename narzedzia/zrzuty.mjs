@@ -52,6 +52,19 @@ async function wpisz(sel, tekst) {
   await cdp('Input.insertText', { text: tekst });
   await sen(150);
 }
+/** Przeciągnięcie palcem w poziomie od środka elementu (swipe albo przesunięcie suwaka). */
+async function przeciagnij(sel, dx, kroki = 10) {
+  const p = await js(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return null; e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
+  if (!p) throw new Error('nie ma: ' + sel);
+  await cdp('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: p.x, y: p.y }] });
+  for (let i = 1; i <= kroki; i++) {
+    await cdp('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: p.x + (dx * i) / kroki, y: p.y }] });
+    await sen(20);
+  }
+  await cdp('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await sen(700);
+}
+const wiersze = () => js(`[...document.querySelectorAll('.wiersz')].map(r => r.querySelector('.w-kg').textContent + 'x' + r.querySelector('.w-powt').textContent)`);
 function sprawdz(warunek, opis) {
   wyniki.push(`${warunek ? 'OK ' : 'ŹLE'} ${opis}`);
   if (!warunek) process.exitCode = 1;
@@ -106,38 +119,64 @@ try {
   await zegar('2026-11-03T18:30:00');
   await zrzut('01-start', true);
   sprawdz((await js(`document.querySelector('.dzien.wybrany b').textContent`)) === 'Wt', 'wtorek 18:30: domyślnie Wt (Dół A)');
+  const propStart = await js(`[...document.querySelectorAll('.podglad li')].map(li => li.querySelector('.prop-l')?.textContent || '')`);
+  sprawdz(propStart.length === 6 && propStart.every((x) => /^(Dziś|Start): /.test(x)), `start: propozycja przy każdym ćwiczeniu (${propStart.length})`);
+  sprawdz(propStart[0] === 'Dziś: 102,5 kg × 8 · 3 serie', `start: suwnica po 3x12 przy 100 kg: ${propStart[0]}`);
+  for (const d of ['Pn', 'Czw', 'Pt']) {
+    await tap(`.dzien:nth-child(${['Pn', 'Wt', 'Czw', 'Pt'].indexOf(d) + 1})`);
+    const p = await js(`[...document.querySelectorAll('.podglad li')].map(li => li.querySelector('.prop-l')?.textContent || '')`);
+    sprawdz(p.length > 0 && p.every((x) => /^(Dziś|Start): .+ · \d serie$/.test(x)), `${d}: propozycje przy wszystkich ${p.length} ćwiczeniach`);
+  }
+  await tap('.dzien:nth-child(1)');
+  await zrzut('01b-start-pn-zapis-trenera', true);
+  // Przesunięcie palcem w bok: dzień planu (Pn -> Wt)
+  await przeciagnij('.podglad', -160);
+  sprawdz((await js(`document.querySelector('.dzien.wybrany b').textContent`)) === 'Wt', 'start: przesunięcie w lewo = następny dzień');
+  await sen(800);
+  sprawdz((await js('window.scrollX')) === 0, 'po przesunięciu strona nie jest przewinięta w bok');
   await tap('[data-a="start"]');
+  sprawdz((await js('document.querySelector("h1").textContent')) === 'Dół A + brzuch', 'po przesunięciu dnia Start działa');
   await zrzut('02-trening', true);
+  sprawdz((await js(`document.querySelector('.karta-cw .prop-l').textContent`)) === 'Dziś: 102,5 kg × 8 · 3 serie', 'lista treningu: propozycja na karcie');
   await tap('[data-a="cw"][data-id="wypychanie-na-suwnicy"]');
-  await zrzut('03-cwiczenie-wiersze');
-  let w = await js(`[...document.querySelectorAll('.wiersz')].map(r => [...r.querySelectorAll('.liczba')].map(i => i.value).join('x'))`);
-  sprawdz(JSON.stringify(w) === '["100x12","100x12","100x12"]', `3 wiersze wypełnione ostatnim razem: ${w}`);
+  await zrzut('03-cwiczenie-suwaki');
+  let w = await wiersze();
+  sprawdz(JSON.stringify(w) === '["102,5x8","102,5x8","102,5x8"]', `3 wiersze wypełnione propozycją na dziś: ${w}`);
   const prop = await js(`document.querySelector('.propozycja b').textContent`);
   sprawdz(prop === '102,5 kg × 8 powt.', `propozycja po 3x12 przy 100 kg: ${prop}`);
-  await tap('.propozycja');
-  w = await js(`[...document.querySelectorAll('.wiersz .liczba[data-pole=kg]')].map(i => i.value)`);
-  sprawdz(w.every((x) => x === '102,5'), `propozycja wstawiona do serii: ${w}`);
-  // +2,5 kg w 1. serii i 9 powtórzeń wpisane z klawiatury
+  sprawdz(await js(`document.querySelector('.propozycja').classList.contains('wstawiona')`), 'propozycja już wstawiona');
+  sprawdz((await js(`document.querySelector('.linijka[data-p="kg"] .on').textContent`)) === '102,5', 'suwak kg ustawiony na 102,5');
+  const srodek = await js(`(() => { const l = document.querySelector('.linijka[data-p="kg"]'), b = l.querySelector('.on'); const a = l.getBoundingClientRect(), c = b.getBoundingClientRect(); return Math.round((c.x + c.width / 2) - (a.x + a.width / 2)); })()`);
+  sprawdz(Math.abs(srodek) <= 2, `zaznaczona wartość na środku suwaka (przesunięcie ${srodek} px)`);
+  // +2,5 kg przyciskiem, powtórzenia przesunięciem suwaka o jedną pozycję (9)
   await tap('.wiersz[data-i="0"] [data-a="krok"][data-p="kg"][data-o="2.5"]');
-  await wpisz('.liczba[data-pole="powt"][data-i="0"]', '9');
+  await przeciagnij('.linijka[data-p="powt"][data-i="0"]', -64);
+  const pPowt = await js(`document.querySelector('.linijka[data-p="powt"] .on').textContent`);
+  sprawdz(pPowt === '9', `przesunięcie suwaka powtórzeń o 1 pozycję: ${pPowt}`);
+  if (pPowt !== '9') await tap('.linijka[data-p="powt"][data-i="0"] [data-v="9"]');
   sprawdz((await js(`document.querySelector('#glowny-opis').textContent`)) === '105 kg × 9 powt.', 'dolny przycisk pokazuje 105 kg × 9');
+  sprawdz(JSON.stringify(await wiersze()) === '["105x9","102,5x8","102,5x8"]', 'wiersz 1 pokazuje nowe liczby');
+  await zrzut('03b-suwak-zmieniony');
   // Przewinięcie przed odhaczeniem: ekran ma zostać w miejscu
   await js('window.scrollTo(0, 120)');
   const y0 = await js('window.scrollY');
   await tap('#glowny-seria');
   await sen(1200);
   const y1 = await js('window.scrollY');
-  const widac = await js(`(() => { const r = document.querySelector('.wiersz.akt, .wiersz:not(.z)').getBoundingClientRect(); return r.top >= 0 && r.bottom <= document.querySelector('#przerwa').getBoundingClientRect().top; })()`);
-  sprawdz(y1 >= y0 && y1 - y0 < 400 && widac, `po odhaczeniu ekran nie wraca na górę, następna seria widoczna nad przerwą (scrollY ${y0} -> ${y1})`);
+  const widac = await js(`(() => { const r = document.querySelector('.wiersz.akt .w-gl').getBoundingClientRect(); return r.top >= 0 && r.bottom <= document.querySelector('#przerwa').getBoundingClientRect().top; })()`);
+  sprawdz(y1 >= y0 && y1 - y0 < 500 && widac, `po odhaczeniu ekran nie wraca na górę, następna seria widoczna nad przerwą (scrollY ${y0} -> ${y1})`);
   await zrzut('04-po-serii-1-przerwa');
   sprawdz(!(await js(`document.querySelector('#przerwa').hidden`)), 'przerwa ruszyła');
-  w = await js(`[...document.querySelectorAll('.wiersz')].map(r => [...r.querySelectorAll('.liczba')].map(i => i.value).join('x'))`);
+  w = await wiersze();
   sprawdz(JSON.stringify(w) === '["105x9","105x9","105x9"]', `zmieniona seria 1 przeszła na dalsze: ${w}`);
+  sprawdz((await js(`document.querySelector('.wiersz.akt').dataset.i`)) === '1', 'po odhaczeniu suwaki są przy serii 2');
   // Seria 2: inny ciężar wpisany ręcznie (z przecinkiem), odhaczona ptaszkiem w wierszu
-  await wpisz('.liczba[data-pole="kg"][data-i="1"]', '107,5');
+  await tap('.wiersz[data-i="1"] [data-a="wpisz"][data-p="kg"]');
+  await cdp('Input.insertText', { text: '107,5' });
+  await klik('dialog button[value="tak"]');
+  sprawdz(JSON.stringify(await wiersze()) === '["105x9","107,5x9","105x9"]', 'ręcznie wpisane 107,5 kg');
   await tap('.wiersz[data-i="1"] .ptak');
-  // Seria 3: "jak seria 2", potem dolnym przyciskiem
-  await tap('.wiersz[data-i="2"] .jak');
+  // Seria 3: dostała liczby z serii 2, odhaczona dolnym przyciskiem
   await tap('#glowny-seria');
   for (let i = 0; i < 9; i++) await tap('#przerwa [data-a="przerwa"][data-o="-15"]').catch(() => {});
   await sen(900);
@@ -154,10 +193,21 @@ try {
   await zrzut('06-nowe-cwiczenie-start', true);
   const pStart = await js(`document.querySelector('.propozycja').innerText`);
   sprawdz(/Propozycja startowa/i.test(pStart) && /12,5 kg/.test(pStart) && /sprawdź na serii rozgrzewkowej/.test(pStart), 'RDL: propozycja startowa 12,5 kg');
-  sprawdz((await js(`document.querySelector('.naglowki').textContent`)).includes('hantel'), 'RDL: kg na hantel');
+  sprawdz((await js(`document.querySelector('.s-gora').textContent`)).includes('na hantel'), 'RDL: kg na hantel');
+  sprawdz((await js('document.querySelectorAll(".anim img").length')) === 2 && !(await js('document.querySelector(".anim").classList.contains("mala")')), 'RDL: duża ilustracja (2 klatki)');
+  // Przesunięcia w bok między ćwiczeniami
+  await przeciagnij('.tytul-cw', 170);
+  sprawdz((await js(`document.querySelector('h1').textContent`)) === '1 z 6', 'przesunięcie w prawo = poprzednie ćwiczenie');
+  await przeciagnij('.tytul-cw', -170);
+  sprawdz((await js(`document.querySelector('h1').textContent`)) === '2 z 6', 'przesunięcie w lewo = następne ćwiczenie');
+  await przeciagnij('.tytul-cw', -40);
+  sprawdz((await js(`document.querySelector('h1').textContent`)) === '2 z 6', 'krótki ruch palcem nie zmienia ćwiczenia');
+  await tap('.nav-cw.prawo');
+  sprawdz((await js(`document.querySelector('h1').textContent`)) === '3 z 6', 'strzałka › = następne ćwiczenie');
+  await tap('.nav-cw.lewo');
   await tap('#glowny-seria');
-  // Seria wpisana, ale nieodhaczona
-  await wpisz('.liczba[data-pole="kg"][data-i="1"]', '15');
+  // Seria wybrana na suwaku, ale nieodhaczona
+  await tap('.linijka[data-p="kg"][data-i="1"] [data-v="15"]');
   await tap('[data-a="pomin"]').catch(() => {});
   await tap('.wstecz');
   await zrzut('07-lista', true);
@@ -191,6 +241,7 @@ try {
   await tap('[data-a="cw"][data-id="wypychanie-na-suwnicy"]');
   const p2 = await js(`document.querySelector('.propozycja b').textContent`);
   sprawdz(p2 === '107,5 kg × 10 powt.', `tydzień później propozycja z historii: ${p2}`);
+  sprawdz(JSON.stringify(await wiersze()) === '["107,5x10","107,5x10","107,5x10"]', 'tydzień później wiersze z propozycji');
   await zrzut('11-tydzien-pozniej');
 
   // ===== 2. Noc z poniedziałku na wtorek =====
@@ -207,8 +258,8 @@ try {
   await zrzut('21-lawka-znane-wyniki');
   const pL = await js(`document.querySelector('.propozycja b').textContent`);
   sprawdz(pL === '52,5 kg × 6 powt.', `ławka po 3x12 przy 50 (zapis Trenera): ${pL}`);
-  w = await js(`[...document.querySelectorAll('.wiersz')].map(r => [...r.querySelectorAll('.liczba')].map(i => i.value).join('x'))`);
-  sprawdz(JSON.stringify(w) === '["50x12","50x12","50x12"]', `ławka: wiersze z zapisu Trenera: ${w}`);
+  w = await wiersze();
+  sprawdz(JSON.stringify(w) === '["52,5x6","52,5x6","52,5x6"]', `ławka: wiersze z propozycji po zapisie Trenera: ${w}`);
   await tap('#glowny-seria');
   await zegar('2026-11-03T00:30:00');
   sprawdz((await js(`document.querySelector('h1').textContent`)) === 'Góra A + brzuch', 'po przeładowaniu o 0:30 trening dalej trwa');
@@ -222,7 +273,7 @@ try {
   const t2 = await js(`document.querySelector('#tekst').textContent`);
   console.log('--- podsumowanie nocne ---\n' + t2 + '\n---');
   sprawdz(t2.startsWith('Byłem: Poniedziałek: Góra A + brzuch (02.11.2026)'), 'trening o 0:30 zapisany jako poniedziałek 2.11');
-  sprawdz(t2.includes('Wyciskanie sztangi na ławce poziomej: 3x12 · 50 kg'), 'identyczne serie scalone');
+  sprawdz(t2.includes('Wyciskanie sztangi na ławce poziomej: 3x6 · 52,5 kg'), 'identyczne serie scalone');
   await tap('[data-a="dom"]');
   sprawdz((await js(`document.querySelector('.dzien.zrobiony b')?.textContent`)) === 'Pn', 'po treningu Pn ma ✓');
   await zrzut('22-start-po-nocnym', true);

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   parsujCel, przerwaSekundy, dzienPlanu, formatKg, formatCzas, propozycja, wierszeStartowe,
   odhaczSerie, aktywnaSeria, podsumowanie, serieTekst, statystyki, rekordy, ostatnio, tydzienPlanu,
+  propozycjaKrotko, wartosciKg, wartosciPowt, ileSerii,
 } from '../logika.js';
 import { PLAN, START_TRENINGU } from '../plan.js';
 
@@ -115,7 +116,7 @@ test('propozycja: krok, bez ciężaru, sekundy, brak danych', () => {
   assert.equal(propozycja({ ost: { serie: [{ kg: 2.5, powt: 5 }] }, cel, krok: 2.5 }).kg, 0);
 });
 
-test('wiersze startowe: z ostatniego razu, a bez historii z propozycji', () => {
+test('wiersze startowe: z propozycji na dziś, a bez propozycji z ostatniego razu', () => {
   const cel = parsujCel('3 x 6-10');
   const w = wierszeStartowe({ cel, ost: { serie: [{ kg: 50, powt: 12 }, { kg: 52.5, powt: 8 }] } });
   assert.deepEqual(w.map((s) => [s.kg, s.powt]), [[50, 12], [52.5, 8], [52.5, 8]]);
@@ -123,6 +124,33 @@ test('wiersze startowe: z ostatniego razu, a bez historii z propozycji', () => {
   const p = wierszeStartowe({ cel, prop: { kg: 60, powt: 8 } });
   assert.deepEqual(p.map((s) => s.kg), [60, 60, 60]);
   assert.deepEqual(wierszeStartowe({ cel: parsujCel('2 x 10') }).map((s) => [s.kg, s.powt]), [[0, 10], [0, 10]]);
+  // Historia i propozycja: wygrywa propozycja (progresja), nie powtórka z ostatniego razu.
+  const ost = { serie: [{ kg: 50, powt: 12 }, { kg: 50, powt: 12 }, { kg: 50, powt: 12 }] };
+  const prop = propozycja({ ost, cel, startKg: 50, krok: 2.5 });
+  assert.deepEqual(wierszeStartowe({ cel, ost, prop }).map((s) => [s.kg, s.powt]), [[52.5, 6], [52.5, 6], [52.5, 6]]);
+});
+
+test('propozycja dla każdego ćwiczenia w planie, na każdy dzień', () => {
+  for (const d of PLAN) for (const c of d.cwiczenia) {
+    const p = propozycja({ ost: ostatnio([], c.id, c.znane), cel: parsujCel(c.cel), startKg: c.startKg, krok: c.krok });
+    assert.ok(p, `brak propozycji: ${d.krotko} ${c.nazwa}`);
+    assert.ok(propozycjaKrotko(p, parsujCel(c.cel)).length > 3);
+  }
+});
+
+test('suwaki: wartości kg i powtórzeń', () => {
+  const kg = wartosciKg({ kg: 50, prop: 52.5, krok: 2.5 });
+  assert.equal(kg[0], 0);
+  assert.ok(kg.includes(50) && kg.includes(52.5) && kg.at(-1) >= 90);
+  assert.ok(kg.every((x, i) => i === 0 || x > kg[i - 1]), 'rosnąco, bez powtórzeń');
+  const poza = wartosciKg({ kg: 17.5, krok: 1 });
+  assert.ok(poza.includes(17.5) && poza.includes(17) && poza.includes(18));
+  assert.equal(wartosciKg({ kg: 0, krok: 2.5 }).at(-1), 40);
+  const p = wartosciPowt(parsujCel('3 x 8-12'), 30);
+  assert.deepEqual([p[0], p.includes(22), p.includes(30)], [1, true, true]);
+  const s = wartosciPowt(parsujCel('2 x 30-60 s'));
+  assert.deepEqual([s[0], s[1], s.at(-1)], [5, 10, 120]);
+  assert.deepEqual([ileSerii(1), ileSerii(2), ileSerii(3), ileSerii(5), ileSerii(12), ileSerii(22)], ['1 seria', '2 serie', '3 serie', '5 serii', '12 serii', '22 serie']);
 });
 
 test('odhaczenie serii: zmieniona seria przechodzi na dalsze nieruszane', () => {

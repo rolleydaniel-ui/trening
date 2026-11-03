@@ -2,12 +2,12 @@ import { PLAN, START_TRENINGU } from './plan.js';
 import {
   parsujCel, przerwaSekundy, dzienPlanu, formatKg, formatCzas, formatCzasTrwania, seriaTekst, serieTekst,
   ostatnio, dataISO, propozycja, wierszeStartowe, odhaczSerie, aktywnaSeria, tydzienPlanu,
-  podsumowanie, statystyki, rekordy, listaCwiczen, OCENY,
+  podsumowanie, statystyki, rekordy, listaCwiczen, OCENY, propozycjaKrotko, wartosciKg, wartosciPowt, ileSerii,
 } from './logika.js';
 
 // ---------- Stan i zapis ----------
 const KLUCZ = 'trening.v2';
-const DOMYSLNE = { aktywny: null, historia: [], ustawienia: { dzwiek: true, wibracje: true, ekran: true, przerwaAuto: true, krokKg: 2.5 } };
+const DOMYSLNE = { aktywny: null, historia: [], ustawienia: { dzwiek: true, wibracje: true, ekran: true, przerwaAuto: true, krokKg: 2.5, malyObraz: false } };
 
 function wczytaj() {
   try {
@@ -24,7 +24,7 @@ let stareKg = {};
 try { stareKg = JSON.parse(localStorage.getItem('last-kg') || '{}'); } catch { /* brak */ }
 
 // Widok (nie zapisywany poza aktywnym treningiem)
-let V = { ekran: S.aktywny ? 'trening' : 'start', dzienId: null, cwId: null, koniecId: null, akt: null, zdjecie: false };
+let V = { ekran: S.aktywny ? 'trening' : 'start', dzienId: null, cwId: null, koniecId: null, akt: null };
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -37,15 +37,16 @@ function cwiczenieTreningu(t, cwId) {
 const zrobione = (t, cwId) => (t.cwiczenia[cwId]?.serie || []).filter((s) => s.z);
 const ostatnioCw = (c) => ostatnio(S.historia, c.id, c.znane);
 
-function propozycjaCw(t, c) {
+/** Propozycja na dany dzień planu (data ISO): z historii, zapisu Trenera albo ciężar startowy. */
+function propozycjaCw(dataPlanu, c) {
   const startKg = stareKg[c.nazwa]?.kg ? Number(stareKg[c.nazwa].kg) : c.startKg;
-  return propozycja({ ost: ostatnioCw(c), cel: parsujCel(c.cel), startKg, krok: c.krok || S.ustawienia.krokKg, tydzien: tydzienPlanu(t.dataPlanu, START_TRENINGU) });
+  return propozycja({ ost: ostatnioCw(c), cel: parsujCel(c.cel), startKg, krok: c.krok || S.ustawienia.krokKg, tydzien: tydzienPlanu(dataPlanu, START_TRENINGU) });
 }
 
 /** Wpis ćwiczenia w treningu; przy pierwszym otwarciu wiersze serii z ostatniego razu. */
 function wpisCw(t, c) {
   if (!t.cwiczenia[c.id]) {
-    t.cwiczenia[c.id] = { serie: wierszeStartowe({ cel: parsujCel(c.cel), ost: ostatnioCw(c), prop: propozycjaCw(t, c) }), ocena: '' };
+    t.cwiczenia[c.id] = { serie: wierszeStartowe({ cel: parsujCel(c.cel), ost: ostatnioCw(c), prop: propozycjaCw(t.dataPlanu, c) }), ocena: '' };
     zapisz();
   }
   return t.cwiczenia[c.id];
@@ -188,32 +189,38 @@ function render() {
   if (V.ekran === 'trening' && !S.aktywny) V.ekran = 'start';
   if (V.ekran === 'cwiczenie' && (!S.aktywny || !cwiczenieTreningu(S.aktywny, V.cwId))) V.ekran = S.aktywny ? 'trening' : 'start';
   app.innerHTML = (widoki[V.ekran] || ekranStart)();
+  ustawLinijki();
   ukladPrzerwy = '';
   tyk();
   if (S.aktywny) trzymajEkran(); else pusc();
 }
 
 function idz(ekran, zmiany = {}) {
-  V = { ...V, ekran, akt: null, ...zmiany };
-  if (ekran === 'cwiczenie' && !('zdjecie' in zmiany)) {
-    // Duże zdjęcie tylko przy ćwiczeniu, którego jeszcze nie robiłeś (decyzja raz, na wejściu, żeby ekran nie skakał).
-    const c = cwiczenieTreningu(S.aktywny, V.cwId);
-    V.zdjecie = !!c && !ostatnioCw(c) && !zrobione(S.aktywny, V.cwId).length;
-  }
+  V = { ...V, ekran, akt: null, technika: false, ...zmiany };
   if (ekran !== 'start' && history.state?.apka !== 2) history.pushState({ apka: 2 }, '');
   render();
   window.scrollTo(0, 0);
 }
 
-function miniatura(c) {
-  return c.zdjecia && c.zdjecia[0]
-    ? `<img class="miniatura" src="${esc(c.zdjecia[0])}" alt="" loading="lazy">`
-    : '<span class="miniatura puste">＋</span>';
+/** Ilustracja ćwiczenia: dwie klatki na zmianę (jak gif). */
+function obrazek(c, klasa = '') {
+  const z = (c.zdjecia || []).slice(0, 2);
+  if (!z.length) return `<span class="obr puste ${klasa}">＋</span>`;
+  return `<span class="obr ${klasa}">${z.map((s) => `<img src="${esc(s)}" alt="" loading="lazy" decoding="async">`).join('')}</span>`;
 }
 
 function ostatnioKrotko(cw) {
   const o = ostatnioCw(cw);
   return o ? serieTekst(o.serie, parsujCel(cw.cel).jednostka) : '';
+}
+
+/** "Dziś: 52,5 kg × 6 powt. · 3 serie" (bez historii: "Start: ..."). */
+function linijkaPropozycji(dataPlanu, c) {
+  const cel = parsujCel(c.cel);
+  const p = propozycjaCw(dataPlanu, c);
+  if (!p) return `<span class="prop-l">${esc(c.cel)}</span>`;
+  const co = propozycjaKrotko(p, cel).replace(' powt.', '').replace('bez ciężaru × ', 'bez ciężaru, ');
+  return `<span class="prop-l ${p.start ? 'start' : ''}">${p.start ? 'Start' : 'Dziś'}: ${esc(co)} · ${ileSerii(cel.serie)}</span>`;
 }
 
 function zrobioneWTygodniu(dataPlanu) {
@@ -222,6 +229,13 @@ function zrobioneWTygodniu(dataPlanu) {
 function dataSlownie(iso) {
   const t = new Date(iso + 'T12:00').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
   return t[0].toUpperCase() + t.slice(1);
+}
+
+/** Data, na którą liczymy propozycję dla wybranego dnia planu: najbliższy taki dzień tygodnia (dziś albo później). */
+function dataDlaDnia(d, dzisISO) {
+  const x = new Date(dzisISO + 'T12:00');
+  for (let i = 0; i < 7 && x.getDay() !== d.dzienTygodnia; i++) x.setDate(x.getDate() + 1);
+  return dataISO(x);
 }
 
 function ekranStart() {
@@ -233,27 +247,29 @@ function ekranStart() {
   tydzien.setDate(tydzien.getDate() - ((tydzien.getDay() + 6) % 7));
   const zrob = zrobioneWTygodniu(dataISO(tydzien));
   const tydz = tydzienPlanu(data, START_TRENINGU);
+  const dataWyb = dataDlaDnia(wyb, data);
 
   const naglowek = dzis
     ? `<small>${esc(dataTekst)}${tydz ? ` · tydzień ${tydz}` : ''}</small><h2>${esc(dzis.nazwa)}</h2><p>Dziś według planu.</p>`
     : `<small>${esc(dataTekst)}</small><h2>Dzień wolny</h2><p>Następny według planu: ${esc(nastepny.dzien.toLowerCase())}, ${esc(nastepny.nazwa)}. Możesz też zrobić dowolny dzień.</p>`;
 
   const aktywny = S.aktywny
-    ? `<button class="karta-cw trwa" data-a="wroc"><span class="miniatura puste">▶</span><span class="n"><b>Trwa: ${esc(dzien(S.aktywny.dzienId)?.nazwa || '')}</b><span>Wróć do treningu</span></span><span class="licz" id="zegar-treningu"></span></button>`
+    ? `<button class="karta-cw trwa" data-a="wroc"><span class="obr puste">▶</span><span class="n"><b>Trwa: ${esc(dzien(S.aktywny.dzienId)?.nazwa || '')}</b><span>Wróć do treningu</span></span><span class="licz" id="zegar-treningu"></span></button>`
     : '';
 
   const lista = wyb.cwiczenia.map((c) => {
     const o = ostatnioKrotko(c);
-    return `<li>${miniatura(c)}<span class="n"><b>${esc(c.nazwa)}</b><span>${o ? 'Ostatnio: ' + esc(o) : esc(c.cel)}</span></span></li>`;
+    return `<li>${obrazek(c)}<span class="n"><b>${esc(c.nazwa)}</b>${linijkaPropozycji(dataWyb, c)}${o ? `<span>Ostatnio: ${esc(o)}</span>` : ''}</span></li>`;
   }).join('');
 
-  return `
+  return `<div class="przesuwne">
   <div class="pasek"><span style="min-width:64px"></span><h1>Trening</h1><button class="prawy" data-a="historia">Historia</button></div>
   ${aktywny}
   <div class="witaj">${naglowek}</div>
   <div class="dni">${PLAN.map((d) => `<button class="dzien ${d.id === V.dzienId ? 'wybrany' : ''} ${zrob.has(d.id) ? 'zrobiony' : ''}" data-a="dzien" data-id="${d.id}"><b>${esc(d.krotko)}</b><span>${esc(d.nazwa.replace(' + brzuch', ''))}</span></button>`).join('')}</div>
-  <div class="sekcja"><h3>${esc(wyb.nazwa)} · ${wyb.cwiczenia.length} ćwiczeń</h3></div>
+  <div class="sekcja"><h3>${esc(wyb.nazwa)} · ${wyb.cwiczenia.length} ćwiczeń</h3><span class="podpowiedz">‹ przesuń: inny dzień ›</span></div>
   <div class="podglad"><ul>${lista}</ul></div>
+  </div>
   <div class="dolny"><div>${S.aktywny
     ? '<button class="glowny" data-a="wroc">Wróć do treningu</button>'
     : `<button class="glowny" data-a="start">Start: ${esc(wyb.nazwa.replace(' + brzuch', ''))}</button>`}</div></div>`;
@@ -268,7 +284,7 @@ function ekranTrening() {
   const zaczete = cw.some((c) => zrobione(t, c.id).length);
 
   const rozg = `<details class="rozgrzewka" ${rozgZrob < d.rozgrzewka.length && !zaczete ? 'open' : ''}>
-    <summary><span class="miniatura puste">🔥</span><b>Rozgrzewka</b><span>${rozgZrob}/${d.rozgrzewka.length}</span></summary>
+    <summary><span class="ikona-rozg">🔥</span><b>Rozgrzewka</b><span>${rozgZrob}/${d.rozgrzewka.length}</span></summary>
     ${d.rozgrzewka.map((r, i) => `<button class="punkt ${t.rozgrzewka?.includes(i) ? 'z' : ''}" data-a="rozg" data-i="${i}">
       <span class="ptaszek">✓</span><span class="n"><b>${esc(r.nazwa)}</b><span>${esc(r.ile)}${r.rada ? ' · ' + esc(r.rada) : ''}</span></span></button>`).join('')}
   </details>`;
@@ -278,10 +294,8 @@ function ekranTrening() {
     const z = zrobione(t, c.id);
     const n = z.length;
     const stan = n >= cel.serie ? 'gotowe' : n > 0 ? 'trwa' : '';
-    const o = ostatnioKrotko(c);
-    const opis = n ? serieTekst(z, cel.jednostka) : (o ? 'Ostatnio: ' + o : c.cel);
-    return `<button class="karta-cw ${stan}" data-a="cw" data-id="${esc(c.id)}">${miniatura(c)}
-      <span class="n"><b>${esc(c.nazwa)}</b><span>${esc(opis)}</span>
+    return `<button class="karta-cw ${stan}" data-a="cw" data-id="${esc(c.id)}">${obrazek(c)}
+      <span class="n"><b>${esc(c.nazwa)}</b>${n ? `<span>${esc(serieTekst(z, cel.jednostka))}</span>` : linijkaPropozycji(t.dataPlanu, c)}
       <span class="kropki">${Array.from({ length: Math.max(cel.serie, n) }, (_, i) => `<i class="${i < n ? 'z' : ''}"></i>`).join('')}</span></span>
       <span class="licz">${n >= cel.serie ? '✓' : `${n}/${cel.serie}`}</span></button>`;
   }).join('');
@@ -290,14 +304,14 @@ function ekranTrening() {
   <div class="pasek"><button class="wstecz" data-a="dom">Start</button><h1>${esc(d.nazwa)}</h1><span class="zegar" id="zegar-treningu"></span></div>
   <div class="postep"><i style="width:${cw.length ? (gotowe / cw.length) * 100 : 0}%"></i></div>
   ${rozg}
-  <div class="sekcja"><h3>Ćwiczenia · ${gotowe}/${cw.length}</h3><span style="font-size:13px;color:var(--ciemny)">w dowolnej kolejności</span></div>
+  <div class="sekcja"><h3>Ćwiczenia · ${gotowe}/${cw.length}</h3><span class="podpowiedz">w dowolnej kolejności</span></div>
   ${karty}
   <button class="dodaj-cw" data-a="dodaj">+ Ćwiczenie spoza planu</button>
   ${d.naKoniec ? `<div class="sekcja"><h3>Na koniec</h3></div><div class="rada">${esc(d.naKoniec)}</div>` : ''}
   <div class="dolny"><div><button class="drugi pelny" data-a="zakoncz">Zakończ trening</button></div></div>`;
 }
 
-// ----- Ekran ćwiczenia: wiersze serii -----
+// ----- Ekran ćwiczenia: wiersze serii, aktywna seria ma suwaki kg i powtórzeń -----
 function kontekstCw() {
   const t = S.aktywny;
   const lista = listaCwiczen(t, PLAN);
@@ -310,33 +324,51 @@ function kontekstCw() {
 }
 
 function htmlPropozycji(k) {
-  const p = propozycjaCw(k.t, k.c);
+  const p = propozycjaCw(k.t.dataPlanu, k.c);
   if (!p) return '';
   const wstawione = k.w.serie.filter((s) => !s.z).every((s) => Number(s.kg) === p.kg && Number(s.powt) === p.powt);
-  const ile = k.cel.jednostka === 's' ? `${p.powt} s` : `${p.powt} powt.`;
-  const co = p.kg ? `${formatKg(p.kg)} kg × ${ile}` : `bez ciężaru × ${ile}`;
   return `<button class="propozycja ${p.start ? 'start' : ''} ${wstawione ? 'wstawiona' : ''}" data-a="wstaw">
-    <span class="pr-tekst"><small>${p.start ? 'Propozycja startowa' : 'Propozycja na dziś'}</small><b>${esc(co)}</b><span>${esc(p.powod)}${p.start && k.c.startUwaga ? ' (' + esc(k.c.startUwaga) + ')' : ''}</span></span>
+    <span class="pr-tekst"><small>${p.start ? 'Propozycja startowa' : 'Propozycja na dziś'}</small><b>${esc(propozycjaKrotko(p, k.cel))}</b><span>${esc(p.powod)}${p.start && k.c.startUwaga ? ' (' + esc(k.c.startUwaga) + ')' : ''}</span></span>
     <span class="pr-przycisk">${wstawione ? '✓ Jest' : 'Wstaw'}</span></button>`;
+}
+
+const kgNaSuwaku = (v) => (Number(v) ? formatKg(v) : 'bez');
+
+function suwak(pole, i, wartosci, obecna, krok, fmt, etykieta) {
+  const v0 = Number(obecna);
+  return `<div class="suwak">
+    <div class="s-gora"><span>${esc(etykieta)}</span><button class="s-wpisz" data-a="wpisz" data-p="${pole}" data-i="${i}">wpisz ręcznie</button></div>
+    <div class="s-rzad">
+      <button class="s-kr" data-a="krok" data-p="${pole}" data-i="${i}" data-o="${-krok}" aria-label="mniej o ${esc(formatKg(krok))}">−</button>
+      <div class="lin-ramka"><div class="linijka" data-p="${pole}" data-i="${i}" role="listbox" aria-label="${esc(etykieta)}"><div class="tor">${wartosci.map((v) => `<button data-a="wybierz" data-v="${v}" class="${v === v0 ? 'on' : ''}" role="option" aria-selected="${v === v0}">${esc(fmt(v))}</button>`).join('')}</div></div></div>
+      <button class="s-kr" data-a="krok" data-p="${pole}" data-i="${i}" data-o="${krok}" aria-label="więcej o ${esc(formatKg(krok))}">+</button>
+    </div></div>`;
 }
 
 function htmlSerii(k) {
   const { c, cel, w, akt, krok } = k;
-  const jedn = cel.jednostka === 's' ? 'sek' : 'powt.';
-  const krokP = cel.jednostka === 's' ? 5 : 1;
+  const sek = cel.jednostka === 's';
+  const jedn = sek ? 's' : 'powt.';
+  const prop = propozycjaCw(k.t.dataPlanu, c);
   const wiersze = w.serie.map((s, i) => {
-    return `<div class="wiersz ${s.z ? 'z' : ''} ${i === akt ? 'akt' : ''}" data-i="${i}">
-      <span class="nr">${i + 1}</span>
-      <input class="liczba" data-pole="kg" data-i="${i}" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" aria-label="Seria ${i + 1}: kg" value="${esc(formatKg(s.kg) || '0')}">
-      <input class="liczba" data-pole="powt" data-i="${i}" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" aria-label="Seria ${i + 1}: ${jedn}" value="${esc(s.powt)}">
+    const on = i === akt;
+    const panel = on ? `<div class="panel">
+      ${suwak('kg', i, wartosciKg({ kg: s.kg, prop: prop?.kg, krok }), s.kg, krok, kgNaSuwaku, `Ciężar, kg${c.hantle ? ' na hantel' : ''}`)}
+      ${suwak('powt', i, wartosciPowt(cel, s.powt), s.powt, sek ? 5 : 1, String, sek ? 'Czas, sekundy' : 'Powtórzenia')}
+    </div>` : '';
+    return `<div class="wiersz ${s.z ? 'z' : ''} ${on ? 'akt' : ''}" data-i="${i}">
+      <button class="w-gl" data-a="aktywna" data-i="${i}" aria-label="Seria ${i + 1}: zmień">
+        <span class="nr">${i + 1}</span>
+        <span class="w-war"><b class="w-kg">${esc(kgNaSuwaku(s.kg))}</b><small class="w-kg-j">${Number(s.kg) ? 'kg' : ''}</small></span>
+        <span class="w-x">×</span>
+        <span class="w-war"><b class="w-powt">${esc(s.powt)}</b><small>${jedn}</small></span>
+        ${on ? '' : '<span class="w-zmien">zmień</span>'}
+      </button>
       <button class="ptak" data-a="odhacz" data-i="${i}" aria-label="${s.z ? 'Odznacz' : 'Odhacz'} serię ${i + 1}" aria-pressed="${s.z}">✓</button>
-      ${s.z ? '' : `<div class="kroki kg"><button data-a="krok" data-i="${i}" data-p="kg" data-o="${-krok}" aria-label="mniej kg">−${formatKg(krok)}</button><button data-a="krok" data-i="${i}" data-p="kg" data-o="${krok}" aria-label="więcej kg">+${formatKg(krok)}</button></div>
-      <div class="kroki powt"><button data-a="krok" data-i="${i}" data-p="powt" data-o="${-krokP}" aria-label="mniej">−${krokP}</button><button data-a="krok" data-i="${i}" data-p="powt" data-o="${krokP}" aria-label="więcej">+${krokP}</button></div>
-      ${i > 0 ? `<button class="jak" data-a="jak-poprzednia" data-i="${i}" aria-label="Jak seria ${i}" title="Jak seria ${i}">⧉<small>jak ${i}</small></button>` : ''}`}
+      ${panel}
     </div>`;
   }).join('');
-  return `<div class="naglowki"><span>Seria</span><span>kg${c.hantle ? ' / hantel' : ''}</span><span>${jedn}</span><span>✓</span></div>
-    ${wiersze}
+  return `${wiersze}
     <div class="rzad-serii"><button class="dodaj-serie" data-a="dodaj-serie">+ Seria</button>${w.serie.length > 1 ? `<button class="dodaj-serie" data-a="usun-serie" data-i="${w.serie.length - 1}">− Seria</button>` : ''}</div>`;
 }
 
@@ -359,27 +391,40 @@ function opisSerii(s, cel) {
 
 function ekranCwiczenie() {
   const k = kontekstCw();
-  const { c, lista, idx, w } = k;
+  const { c, lista, idx, w, t } = k;
   const o = ostatnioCw(c);
-  const zdj = c.zdjecia?.length && V.zdjecie
-    ? `<div class="anim">${c.zdjecia.map((z) => `<img src="${esc(z)}" alt="">`).join('')}${c.yt ? `<a class="yt" href="${esc(c.yt)}" target="_blank" rel="noopener">▶ Technika</a>` : ''}</div>`
-    : '';
+  const mala = S.ustawienia.malyObraz;
+  const strzalki = `<button class="nav-cw lewo" data-a="poprz" ${idx === 0 ? 'disabled' : ''} aria-label="Poprzednie ćwiczenie">‹</button><button class="nav-cw prawo" data-a="nast" ${idx === lista.length - 1 ? 'disabled' : ''} aria-label="Następne ćwiczenie">›</button>`;
+  const zdj = c.zdjecia?.length
+    ? `<div class="anim ${mala ? 'mala' : ''}" data-a="obraz" aria-label="${mala ? 'Powiększ' : 'Zmniejsz'} ilustrację">${c.zdjecia.slice(0, 2).map((z) => `<img src="${esc(z)}" alt="">`).join('')}${strzalki}${c.yt ? `<a class="yt" href="${esc(c.yt)}" target="_blank" rel="noopener">▶ Technika</a>` : ''}</div>`
+    : `<div class="bez-obrazu">${strzalki}</div>`;
+  const kropki = `<div class="kropki-cw" aria-hidden="true">${lista.map((x, i) => `<i class="${i === idx ? 'teraz' : ''} ${zrobione(t, x.id).length >= parsujCel(x.cel).serie ? 'z' : ''}"></i>`).join('')}</div>`;
   const oceny = `<div class="podpis">Jak szło to ćwiczenie?</div><div class="oceny">${Object.entries(OCENY).map(([key, n]) => `<button class="${key} ${w.ocena === key ? 'on' : ''}" data-a="ocena" data-k="${key}">${key === 'ok' ? 'OK' : n[0].toUpperCase() + n.slice(1)}</button>`).join('')}</div>`;
 
-  return `
+  return `<div class="przesuwne">
   <div class="pasek"><button class="wstecz" data-a="lista">Lista</button><h1>${idx + 1} z ${lista.length}</h1><span class="zegar" id="zegar-treningu"></span></div>
+  ${kropki}
   ${zdj}
-  <div class="naglowek-cw">
-    <div><h2 class="tytul-cw">${esc(c.nazwa)}</h2>
-    <p class="cel-cw"><b>${esc(c.cel)}</b>${c.przerwa ? ` · przerwa ${esc(c.przerwa)}` : ''}</p></div>
-    ${c.zdjecia?.length && !V.zdjecie ? `<button data-a="zdjecie" aria-label="Pokaż jak wykonać">${miniatura(c)}</button>` : ''}
-  </div>
-  ${c.rada ? `<details class="rada"><summary>Technika</summary><p>${esc(c.rada)}</p>${c.uwaga ? `<p style="color:var(--szary)">${esc(c.uwaga)}</p>` : ''}${c.yt ? `<p><a href="${esc(c.yt)}" target="_blank" rel="noopener">▶ Filmy z techniką (YouTube)</a></p>` : ''}</details>` : ''}
+  <h2 class="tytul-cw">${esc(c.nazwa)}</h2>
+  <div class="cel-cw"><span><b>${esc(c.cel)}</b>${c.przerwa ? ` · przerwa ${esc(c.przerwa)}` : ''}</span>${c.rada ? `<button class="technika-btn" data-a="technika" aria-expanded="${!!V.technika}">Technika ${V.technika ? '▴' : '▾'}</button>` : ''}</div>
+  ${c.rada ? `<div class="rada" id="technika" ${V.technika ? '' : 'hidden'}><p>${esc(c.rada)}</p>${c.uwaga ? `<p style="color:var(--szary)">${esc(c.uwaga)}</p>` : ''}${c.yt ? `<p><a href="${esc(c.yt)}" target="_blank" rel="noopener">▶ Filmy z techniką (YouTube)</a></p>` : ''}</div>` : ''}
   ${o ? `<p class="ostatnio">Ostatnio (${esc(dataKrotka(o.data))}${o.znane ? ', zapis Trenera' : ''}): <b>${esc(serieTekst(o.serie, k.cel.jednostka))}</b>${o.ocena ? ' · ' + OCENY[o.ocena] : ''}</p>` : ''}
   <div id="propozycja">${htmlPropozycji(k)}</div>
   <div class="serie" id="serie">${htmlSerii(k)}</div>
   ${oceny}
+  </div>
   <div class="dolny" id="dol">${htmlDolu(k)}</div>`;
+}
+
+/** Suwaki: obecna wartość na środku (bez animacji po przerysowaniu, płynnie po +/−). */
+function ustawLinijki(plynnie = false) {
+  document.querySelectorAll('.linijka').forEach((l) => {
+    const on = l.querySelector('.on');
+    if (!on || !l.clientWidth) return;
+    const cel = on.offsetLeft + on.offsetWidth / 2 - l.clientWidth / 2;
+    l._dotyk = false;
+    l.scrollTo({ left: cel, behavior: plynnie ? 'smooth' : 'auto' });
+  });
 }
 
 /** Odświeża tylko serie, propozycję i dolny przycisk (bez przewijania i bez przerysowania reszty). */
@@ -389,28 +434,51 @@ function odswiezCwiczenie() {
   $('#propozycja').innerHTML = htmlPropozycji(k);
   $('#serie').innerHTML = htmlSerii(k);
   $('#dol').innerHTML = htmlDolu(k);
+  ustawLinijki();
 }
-/** Po wpisaniu liczby: tylko etykieta dolnego przycisku i stan propozycji. */
-function odswiezEtykiety() {
+/** Po zmianie liczby: etykiety wiersza i dolnego przycisku, stan propozycji. */
+function odswiezEtykiety(i) {
   const k = kontekstCw();
+  const s = k.w.serie[i];
+  const r = $(`.wiersz[data-i="${i}"]`);
+  if (s && r) {
+    $('.w-kg', r).textContent = kgNaSuwaku(s.kg);
+    $('.w-kg-j', r).textContent = Number(s.kg) ? 'kg' : '';
+    $('.w-powt', r).textContent = String(s.powt);
+  }
   const opis = $('#glowny-opis');
   const nr = Number($('#glowny-seria')?.dataset.i);
   if (opis && k.w.serie[nr]) opis.textContent = opisSerii(k.w.serie[nr], k.cel);
   $('#propozycja').innerHTML = htmlPropozycji(k);
 }
-/** Następna seria zasłonięta przez pasek przerwy albo dolny przycisk: przewiń łagodnie tylko tyle, żeby była widać. */
+/** Aktywna seria zasłonięta przez pasek przerwy albo dolny przycisk: przewiń łagodnie tylko tyle, żeby było widać. */
 function pokazAktywny() {
   const r = $('.wiersz.akt') || $('.wiersz:not(.z)');
   if (!r) return;
   const zaslony = [$('#przerwa'), $('#dol')].filter((e) => e && !e.hidden).map((e) => e.getBoundingClientRect().top);
   const granica = Math.min(window.innerHeight, ...zaslony) - 8;
-  const dol = r.getBoundingClientRect().bottom;
-  if (dol > granica) window.scrollBy({ top: dol - granica, behavior: 'smooth' });
+  const { top, bottom } = r.getBoundingClientRect();
+  if (bottom > granica) window.scrollBy({ top: Math.min(bottom - granica, top - 8), behavior: 'smooth' });
+  else if (top < 0) window.scrollBy({ top: top - 12, behavior: 'smooth' });
 }
-function ustawAktywny(i) {
-  V.akt = i;
-  document.querySelectorAll('.wiersz').forEach((r) => r.classList.toggle('akt', Number(r.dataset.i) === i));
-  $('#dol').innerHTML = htmlDolu(kontekstCw());
+
+/** Przesunięcie palcem w bok: następne/poprzednie ćwiczenie albo dzień planu. */
+function przesun(kier) {
+  if (V.ekran === 'cwiczenie') {
+    const lista = listaCwiczen(S.aktywny, PLAN);
+    const i = lista.findIndex((c) => c.id === V.cwId) + kier;
+    if (i < 0 || i >= lista.length) return false;
+    idz('cwiczenie', { cwId: lista[i].id });
+  } else if (V.ekran === 'start') {
+    const i = PLAN.findIndex((d) => d.id === V.dzienId) + kier;
+    if (i < 0 || i >= PLAN.length) return false;
+    V.dzienId = PLAN[i].id;
+    render();
+  } else return false;
+  const el = $('.przesuwne');
+  if (el) { el.classList.add(kier > 0 ? 'wjazd-p' : 'wjazd-l'); setTimeout(() => el.classList.remove('wjazd-p', 'wjazd-l'), 320); }
+  wibruj(6);
+  return true;
 }
 
 function skrot(n) { return n.length > 28 ? n.slice(0, 26).trimEnd() + '…' : n; }
@@ -469,11 +537,11 @@ function ekranUstawienia() {
 }
 
 // ---------- Okna dialogowe ----------
-function pytanie({ tytul, tekst = '', tak = 'Tak', nie = 'Anuluj', pole = null, groznie = false }) {
+function pytanie({ tytul, tekst = '', tak = 'Tak', nie = 'Anuluj', pole = null, groznie = false, wartosc = '', klawiatura = 'text' }) {
   return new Promise((ok) => {
     const d = document.createElement('dialog');
     d.innerHTML = `<h3>${esc(tytul)}</h3>${tekst ? `<p>${esc(tekst)}</p>` : ''}
-      ${pole ? `<input type="text" id="dl-pole" placeholder="${esc(pole)}" autocomplete="off">` : ''}
+      ${pole ? `<input type="text" id="dl-pole" placeholder="${esc(pole)}" value="${esc(wartosc)}" inputmode="${esc(klawiatura)}" enterkeyhint="done" autocomplete="off">` : ''}
       <div class="rzad"><button class="drugi pelny" value="nie">${esc(nie)}</button><button class="${groznie ? 'drugi zle-tekst' : 'glowny'} pelny" value="tak">${esc(tak)}</button></div>`;
     document.body.append(d);
     d.addEventListener('click', (e) => {
@@ -486,7 +554,12 @@ function pytanie({ tytul, tekst = '', tak = 'Tak', nie = 'Anuluj', pole = null, 
     });
     d.addEventListener('cancel', () => { d.remove(); ok(null); });
     d.showModal();
-    if (pole) $('#dl-pole', d).focus();
+    if (pole) {
+      const el = $('#dl-pole', d);
+      el.focus();
+      el.select();
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('button[value="tak"]', d).click(); } });
+    }
   });
 }
 
@@ -566,15 +639,30 @@ async function kopiuj(tekst, pre) {
 function zmienPole(i, pole, wartosc) {
   const k = kontekstCw();
   const s = k.w.serie[i];
-  if (!s) return;
+  if (!s || Number(s[pole]) === Number(wartosc)) return;
   s[pole] = wartosc;
   s.auto = false;
   zapisz();
+  odswiezEtykiety(i);
 }
 
+/** Zaznacza wartość na suwaku i przesuwa ją na środek. false = takiej wartości nie ma na suwaku. */
+function zaznaczNaLinijce(l, v, plynnie = true) {
+  const b = [...l.querySelectorAll('[data-v]')].find((x) => Number(x.dataset.v) === Number(v));
+  if (!b) return false;
+  l.querySelectorAll('.on').forEach((x) => { x.classList.remove('on'); x.setAttribute('aria-selected', 'false'); });
+  b.classList.add('on');
+  b.setAttribute('aria-selected', 'true');
+  l._dotyk = false;
+  l.scrollTo({ left: b.offsetLeft + b.offsetWidth / 2 - l.clientWidth / 2, behavior: plynnie ? 'smooth' : 'auto' });
+  return true;
+}
+const linijka = (pole, i) => $(`.linijka[data-p="${pole}"][data-i="${i}"]`);
+
 document.addEventListener('click', async (e) => {
+  if (e.target.closest('a[href]')) return;
   const b = e.target.closest('[data-a]');
-  if (!b) return;
+  if (!b || b.disabled) return;
   const a = b.dataset.a;
   const t = S.aktywny;
   odblokujDzwiek();
@@ -587,7 +675,54 @@ document.addEventListener('click', async (e) => {
     case 'historia': idz('historia'); break;
     case 'ustawienia': idz('ustawienia'); break;
     case 'cw': idz('cwiczenie', { cwId: b.dataset.id }); break;
-    case 'zdjecie': V.zdjecie = true; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
+    case 'obraz': {
+      S.ustawienia.malyObraz = !S.ustawienia.malyObraz;
+      zapisz();
+      b.classList.toggle('mala', S.ustawienia.malyObraz);
+      break;
+    }
+    case 'technika': {
+      V.technika = !V.technika;
+      $('#technika').hidden = !V.technika;
+      b.setAttribute('aria-expanded', String(V.technika));
+      b.textContent = `Technika ${V.technika ? '▴' : '▾'}`;
+      break;
+    }
+    case 'poprz': przesun(-1); break;
+    case 'nast': przesun(1); break;
+    case 'aktywna': {
+      const i = Number(b.dataset.i);
+      if (kontekstCw().akt === i) break;
+      V.akt = i;
+      odswiezCwiczenie();
+      pokazAktywny();
+      break;
+    }
+    case 'wybierz': {
+      const l = b.closest('.linijka');
+      const v = Number(b.dataset.v);
+      zmienPole(Number(l.dataset.i), l.dataset.p, v);
+      zaznaczNaLinijce(l, v);
+      wibruj(5);
+      break;
+    }
+    case 'wpisz': {
+      const i = Number(b.dataset.i);
+      const p = b.dataset.p;
+      const k = kontekstCw();
+      const s = k.w.serie[i];
+      const kg = p === 'kg';
+      const w = await pytanie({
+        tytul: `Seria ${i + 1}: ${kg ? 'ciężar' : k.cel.jednostka === 's' ? 'czas' : 'powtórzenia'}`,
+        tekst: kg ? 'W kilogramach, np. 52,5' : k.cel.jednostka === 's' ? 'W sekundach' : '',
+        pole: kg ? 'kg' : 'liczba', wartosc: kg ? formatKg(s.kg) : String(s.powt), klawiatura: kg ? 'decimal' : 'numeric', tak: 'Gotowe',
+      });
+      if (w == null || w === false) break;
+      const v = kg ? zaokr(liczba(w)) : Math.max(0, Math.round(liczba(w)));
+      zmienPole(i, p, v);
+      odswiezCwiczenie();
+      break;
+    }
     case 'rozg': {
       const i = Number(b.dataset.i);
       t.rozgrzewka = t.rozgrzewka.includes(i) ? t.rozgrzewka.filter((x) => x !== i) : [...t.rozgrzewka, i];
@@ -604,14 +739,12 @@ document.addEventListener('click', async (e) => {
       const s = k.w.serie[i];
       const nowa = p === 'kg' ? zaokr((Number(s.kg) || 0) + Number(b.dataset.o)) : Math.max(0, Math.round((Number(s.powt) || 0) + Number(b.dataset.o)));
       zmienPole(i, p, nowa);
-      const pole = $(`.liczba[data-pole="${p}"][data-i="${i}"]`);
-      if (pole) pole.value = p === 'kg' ? formatKg(nowa) : String(nowa);
-      odswiezEtykiety();
+      const l = linijka(p, i);
+      if (!l || !zaznaczNaLinijce(l, nowa)) odswiezCwiczenie();
       wibruj(8);
       break;
     }
     case 'odhacz': {
-      if (document.activeElement?.classList.contains('liczba')) document.activeElement.blur();
       const k = kontekstCw();
       const i = Number(b.dataset.i);
       const s = k.w.serie[i];
@@ -648,16 +781,6 @@ document.addEventListener('click', async (e) => {
       odswiezCwiczenie();
       break;
     }
-    case 'jak-poprzednia': {
-      const k = kontekstCw();
-      const i = Number(b.dataset.i);
-      const pop = k.w.serie[i - 1];
-      Object.assign(k.w.serie[i], { kg: pop.kg, powt: pop.powt, auto: false });
-      V.akt = i;
-      zapisz();
-      odswiezCwiczenie();
-      break;
-    }
     case 'usun-serie': {
       const k = kontekstCw();
       const i = Number(b.dataset.i);
@@ -670,7 +793,7 @@ document.addEventListener('click', async (e) => {
     }
     case 'wstaw': {
       const k = kontekstCw();
-      const p = propozycjaCw(k.t, k.c);
+      const p = propozycjaCw(k.t.dataPlanu, k.c);
       if (!p) break;
       for (const s of k.w.serie) if (!s.z) { s.kg = p.kg; s.powt = p.powt; s.auto = true; }
       zapisz();
@@ -734,36 +857,70 @@ document.addEventListener('click', async (e) => {
 
 document.addEventListener('input', (e) => {
   const el = e.target;
-  if (el.classList?.contains('liczba') && V.ekran === 'cwiczenie') {
-    const i = Number(el.dataset.i);
-    const v = el.dataset.pole === 'kg' ? zaokr(liczba(el.value)) : Math.max(0, Math.round(liczba(el.value)));
-    zmienPole(i, el.dataset.pole, v);
-    odswiezEtykiety();
-  }
   if (el.id === 'notatka') {
     const tr = S.historia.find((h) => h.id === V.koniecId);
     if (tr) { tr.notatka = el.value.trim(); zapisz(); $('#tekst').textContent = podsumowanie(tr, PLAN); }
   }
 });
 
-// Tapnięcie w pole serii: ten wiersz staje się aktywny (bez przerysowania, klawiatura zostaje).
-document.addEventListener('focusin', (e) => {
-  const el = e.target;
-  if (!el.classList?.contains('liczba')) return;
-  const i = Number(el.dataset.i);
-  if (V.akt !== i) ustawAktywny(i);
-  setTimeout(() => el.select(), 0);
-});
-// Po wyjściu z pola: liczba w ładnym formacie (52.5 -> 52,5).
-document.addEventListener('focusout', (e) => {
-  const el = e.target;
-  if (!el.classList?.contains('liczba') || V.ekran !== 'cwiczenie') return;
-  const s = kontekstCw().w.serie[Number(el.dataset.i)];
-  if (s) el.value = el.dataset.pole === 'kg' ? formatKg(s.kg) || '0' : String(s.powt);
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.target.classList?.contains('liczba')) e.target.blur();
-});
+// ----- Suwaki: przesuwanie palcem zmienia wartość (ta na środku), dopiero po dotknięciu suwaka -----
+for (const ev of ['pointerdown', 'touchstart', 'wheel']) {
+  document.addEventListener(ev, (e) => { const l = e.target.closest?.('.linijka'); if (l) l._dotyk = true; }, { passive: true, capture: true });
+}
+document.addEventListener('scroll', (e) => {
+  const l = e.target;
+  if (!l.classList?.contains('linijka') || !l._dotyk) return;
+  const srodek = l.scrollLeft + l.clientWidth / 2;
+  let najb = null;
+  let odl = Infinity;
+  for (const x of l.firstElementChild.children) {
+    const d = Math.abs(x.offsetLeft + x.offsetWidth / 2 - srodek);
+    if (d < odl) { odl = d; najb = x; }
+  }
+  if (!najb || najb.classList.contains('on')) return;
+  l.querySelectorAll('.on').forEach((x) => { x.classList.remove('on'); x.setAttribute('aria-selected', 'false'); });
+  najb.classList.add('on');
+  najb.setAttribute('aria-selected', 'true');
+  zmienPole(Number(l.dataset.i), l.dataset.p, Number(najb.dataset.v));
+  wibruj(3);
+}, true);
+
+// ----- Przesunięcie palcem w bok: inne ćwiczenie (ekran ćwiczenia) albo inny dzień (start) -----
+const BEZ_PRZESUWANIA = '.linijka, .suwak, input, textarea, dialog, .przerwa, .dolny, .toast';
+let palec = null;
+document.addEventListener('touchstart', (e) => {
+  palec = null;
+  if (e.touches.length !== 1 || !['cwiczenie', 'start'].includes(V.ekran) || e.target.closest(BEZ_PRZESUWANIA)) return;
+  const el = $('.przesuwne');
+  if (!el) return;
+  palec = { x: e.touches[0].clientX, y: e.touches[0].clientY, kier: null, dx: 0, el };
+}, { passive: true });
+document.addEventListener('touchmove', (e) => {
+  if (!palec) return;
+  const dx = e.touches[0].clientX - palec.x;
+  const dy = e.touches[0].clientY - palec.y;
+  if (!palec.kier) {
+    if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return;
+    palec.kier = Math.abs(dx) > Math.abs(dy) * 1.4 ? 'x' : 'y';
+  }
+  if (palec.kier !== 'x') return;
+  palec.dx = dx;
+  palec.el.style.transition = 'none';
+  palec.el.style.transform = `translateX(${dx * 0.5}px)`;
+  palec.el.style.opacity = String(Math.max(0.5, 1 - Math.abs(dx) / 600));
+}, { passive: true });
+function puscPalec() {
+  if (!palec) return;
+  const { kier, dx, el } = palec;
+  palec = null;
+  if (kier !== 'x') return;
+  el.style.transform = '';
+  el.style.opacity = '';
+  el.style.transition = '';
+  if (Math.abs(dx) > 70) przesun(dx < 0 ? 1 : -1);
+}
+document.addEventListener('touchend', puscPalec, { passive: true });
+document.addEventListener('touchcancel', puscPalec, { passive: true });
 
 document.addEventListener('change', async (e) => {
   const u = e.target.dataset?.u;

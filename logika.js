@@ -171,17 +171,60 @@ export function propozycja({ ost = null, cel, startKg, krok = 2.5, tydzien = 0 }
 }
 
 /**
- * Wiersze serii na start ćwiczenia: tyle, ile serii w planie, wypełnione tym,
- * co było ostatnio (ta sama seria, a jak jej nie było, to ostatnia), bez historii propozycją startową.
+ * Wiersze serii na start ćwiczenia: tyle, ile serii w planie, wypełnione propozycją na dziś
+ * (progresja z planu Trenera; za lekko = robisz więcej). Bez propozycji: to, co było ostatnio
+ * (ta sama seria, a jak jej nie było, to ostatnia), a bez niczego zero i dolna granica zakresu.
  */
 export function wierszeStartowe({ cel, ost = null, prop = null }) {
   const serie = ost?.serie || [];
   return Array.from({ length: cel.serie }, (_, i) => {
     const s = serie[i] || serie[serie.length - 1];
-    const w = s ? { kg: Number(s.kg) || 0, powt: Number(s.powt) || cel.min }
-      : prop ? { kg: prop.kg, powt: prop.powt } : { kg: 0, powt: cel.min };
+    const w = prop ? { kg: prop.kg, powt: prop.powt }
+      : s ? { kg: Number(s.kg) || 0, powt: Number(s.powt) || cel.min } : { kg: 0, powt: cel.min };
     return { ...w, z: false, auto: true };
   });
+}
+
+/** Propozycja krótko: "52,5 kg × 6 powt.", "bez ciężaru × 12 powt.", "× 40 s". */
+export function propozycjaKrotko(p, cel) {
+  if (!p) return '';
+  const ile = cel.jednostka === 's' ? `${p.powt} s` : `${p.powt} powt.`;
+  return Number(p.kg) ? `${formatKg(p.kg)} kg × ${ile}` : `bez ciężaru × ${ile}`;
+}
+
+const r2 = (x) => Math.round(Number(x) * 100) / 100;
+
+/**
+ * Wartości na suwaku ciężaru: co krok od 0 do ok. 1,6 x (obecny albo proponowany) + 10 kg (min. 40),
+ * zawsze z obecną wartością i propozycją (np. 17,5 przy kroku 1).
+ */
+export function wartosciKg({ kg = 0, prop = 0, krok = 2.5 }) {
+  const k = Number(krok) > 0 ? Number(krok) : 2.5;
+  const ref = Math.max(Number(kg) || 0, Number(prop) || 0);
+  const gora = Math.max(40, Math.ceil((ref * 1.6 + 10) / k) * k);
+  const out = new Set();
+  for (let i = 0; i * k <= gora + 1e-9; i++) out.add(r2(i * k));
+  for (const x of [kg, prop]) if (Number(x) > 0) out.add(r2(x));
+  return [...out].sort((a, b) => a - b);
+}
+
+/** Wartości na suwaku powtórzeń (1, 2, 3...) albo sekund (co 5 s), z obecną wartością. */
+export function wartosciPowt(cel, obecna = 0) {
+  const sek = cel.jednostka === 's';
+  const k = sek ? 5 : 1;
+  const gora = sek ? Math.max(120, cel.max + 60) : Math.max(25, cel.max + 10);
+  const out = new Set();
+  for (let v = k; v <= gora; v += k) out.add(v);
+  if (Number(obecna) > 0) out.add(Math.round(Number(obecna)));
+  return [...out].sort((a, b) => a - b);
+}
+
+/** "2 serie", "5 serii", "1 seria". */
+export function ileSerii(n) {
+  if (n === 1) return '1 seria';
+  const d = n % 10;
+  const nn = n % 100;
+  return `${n} ${d >= 2 && d <= 4 && (nn < 12 || nn > 14) ? 'serie' : 'serii'}`;
 }
 
 /** Seria odhaczona: dalsze nieruszane wiersze dostają te same liczby, jeśli tę serię zmieniałeś. */
