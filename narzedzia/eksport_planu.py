@@ -10,7 +10,16 @@ TU = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(TU)
 TRENER = os.environ.get("TRENER_PLAN", os.path.expanduser("~/sztab/dane/agenci/trener/plan-ze-zdjeciami"))
 sys.path.insert(0, TRENER)
-from dane import DNI, db  # noqa: E402
+import dane  # noqa: E402
+
+DNI, db = dane.DNI, dane.db
+APKA = getattr(dane, "APKA", {})
+ZNANE = getattr(dane, "ZNANE_WYNIKI", {})
+START_TRENINGU = getattr(dane, "START_TRENINGU", "")
+NAZWY = {c[0] for _, _, cw in DNI for c in cw}
+for k in list(APKA) + list(ZNANE):
+    if k not in NAZWY:
+        raise SystemExit("dane.py: nie ma takiego ćwiczenia w DNI: " + k)
 
 # Który dzień tygodnia (0 = niedziela, jak getDay() w JS) to który dzień planu.
 DZIEN_TYGODNIA = [1, 2, 4, 5]
@@ -39,9 +48,29 @@ def slug(s):
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
 
 
+# Ta sama nazwa w dwóch dniach (np. uginanie nóg siedząc i leżąc): id z dopiskiem z bazy zdjęć.
+_ile = {}
+for _, _, cw in DNI:
+    for c in cw:
+        _ile[slug(c[0])] = _ile.get(slug(c[0]), 0) + 1
+
+
 def cwiczenie(pl, serie, przerwa, rada, klucz, uwaga="", fraza=""):
-    return dict(id=slug(pl), nazwa=pl, cel=serie, przerwa=przerwa, rada=rada, uwaga=uwaga,
-                zdjecia=zdjecia(klucz), yt=yt(fraza or pl + " technika"))
+    i = slug(pl) if _ile[slug(pl)] == 1 else slug(pl) + "-" + slug(klucz)
+    out = dict(id=i, nazwa=pl, cel=serie, przerwa=przerwa, rada=rada, uwaga=uwaga,
+               zdjecia=zdjecia(klucz), yt=yt(fraza or pl + " technika"))
+    a = APKA.get(pl, {})
+    if "start_kg" in a:
+        out["startKg"] = a["start_kg"]
+    out["krok"] = a.get("krok", 2.5)
+    if a.get("hantle"):
+        out["hantle"] = True
+    if a.get("uwaga"):
+        out["startUwaga"] = a["uwaga"]
+    if pl in ZNANE:
+        data, n, powt, kg, ocena = ZNANE[pl]
+        out["znane"] = dict(data=data, serie=[dict(kg=kg, powt=powt)] * n, ocena=ocena)
+    return out
 
 
 def rozgrzewka(nazwa, ile, rada, klucz=None, fraza=""):
@@ -76,4 +105,5 @@ plik = os.path.join(REPO, "plan.js")
 with open(plik, "w", encoding="utf-8", newline="\n") as f:
     f.write("// Wygenerowane przez narzedzia/eksport_planu.py z planu Trenera. Nie edytuj ręcznie.\n")
     f.write("export const PLAN = " + json.dumps(dni, ensure_ascii=False, indent=1) + ";\n")
+    f.write("export const START_TRENINGU = " + json.dumps(START_TRENINGU) + ";\n")
 print("plan.js:", len(dni), "dni,", sum(len(d["cwiczenia"]) for d in dni), "ćwiczeń")

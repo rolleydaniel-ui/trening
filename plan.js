@@ -67,7 +67,27 @@ export const PLAN = [
      "img/Barbell_Bench_Press_-_Medium_Grip_0.jpg",
      "img/Barbell_Bench_Press_-_Medium_Grip_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=wyciskanie%20sztangi%20le%C5%BC%C4%85c%20technika"
+    "yt": "https://www.youtube.com/results?search_query=wyciskanie%20sztangi%20le%C5%BC%C4%85c%20technika",
+    "startKg": 50,
+    "krok": 2.5,
+    "znane": {
+     "data": "2026-11-02",
+     "serie": [
+      {
+       "kg": 50,
+       "powt": 12
+      },
+      {
+       "kg": 50,
+       "powt": 12
+      },
+      {
+       "kg": 50,
+       "powt": 12
+      }
+     ],
+     "ocena": "ok"
+    }
    },
    {
     "id": "wioslowanie-na-wyciagu-siedzac",
@@ -80,7 +100,27 @@ export const PLAN = [
      "img/Seated_Cable_Rows_0.jpg",
      "img/Seated_Cable_Rows_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=wios%C5%82owanie%20na%20wyci%C4%85gu%20siedz%C4%85c%20technika"
+    "yt": "https://www.youtube.com/results?search_query=wios%C5%82owanie%20na%20wyci%C4%85gu%20siedz%C4%85c%20technika",
+    "startKg": 40,
+    "krok": 2.5,
+    "znane": {
+     "data": "2026-11-02",
+     "serie": [
+      {
+       "kg": 40,
+       "powt": 10
+      },
+      {
+       "kg": 40,
+       "powt": 10
+      },
+      {
+       "kg": 40,
+       "powt": 10
+      }
+     ],
+     "ocena": "ok"
+    }
    },
    {
     "id": "sciaganie-drazka-wyciagu-gornego-do-klatki",
@@ -93,7 +133,27 @@ export const PLAN = [
      "img/Wide-Grip_Lat_Pulldown_0.jpg",
      "img/Wide-Grip_Lat_Pulldown_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=%C5%9Bci%C4%85ganie%20dr%C4%85%C5%BCka%20wyci%C4%85gu%20g%C3%B3rnego%20technika"
+    "yt": "https://www.youtube.com/results?search_query=%C5%9Bci%C4%85ganie%20dr%C4%85%C5%BCka%20wyci%C4%85gu%20g%C3%B3rnego%20technika",
+    "startKg": 35,
+    "krok": 2.5,
+    "znane": {
+     "data": "2026-11-02",
+     "serie": [
+      {
+       "kg": 35,
+       "powt": 8
+      },
+      {
+       "kg": 35,
+       "powt": 8
+      },
+      {
+       "kg": 35,
+       "powt": 8
+      }
+     ],
+     "ocena": "ok"
+    }
    },
    {
     "id": "wyciskanie-hantli-nad-glowe-siedzac",
@@ -106,7 +166,24 @@ export const PLAN = [
      "img/Dumbbell_Shoulder_Press_0.jpg",
      "img/Dumbbell_Shoulder_Press_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=wyciskanie%20hantli%20nad%20g%C5%82ow%C4%99%20siedz%C4%85c%20technika"
+    "yt": "https://www.youtube.com/results?search_query=wyciskanie%20hantli%20nad%20g%C5%82ow%C4%99%20siedz%C4%85c%20technika",
+    "startKg": 17.5,
+    "krok": 2.5,
+    "hantle": true,
+    "znane": {
+     "data": "2026-11-02",
+     "serie": [
+      {
+       "kg": 17.5,
+       "powt": 8
+      },
+      {
+       "kg": 17.5,
+       "powt": 8
+      }
+     ],
+     "ocena": "ciezko"
+    }
    },
    {
     "id": "unoszenie-hantli-bokiem",
@@ -119,7 +196,28 @@ export const PLAN = [
      "img/Side_Lateral_Raise_0.jpg",
      "img/Side_Lateral_Raise_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=unoszenie%20hantli%20bokiem%20technika"
+    "yt": "https://www.youtube.com/results?search_query=unoszenie%20hantli%20bokiem%20technika",
+    "startKg": 5,
+    "krok": 1,
+    "hantle": true,
+    "znane": {
+     "data": "2026-11-02",
+     "serie": [
+      {
+       "kg": 5,
+       "powt": 12
+      },
+      {
+       "kg": 5,
+       "powt": 12
+      },
+      {
+       "kg": 5,
+       "powt": 12
+      }
+     ],
+     "ocena": "ciezko"
+    }
    },
    {
     "id": "prostowanie-ramion-z-lina-na-wyciagu",
@@ -132,7 +230,23 @@ export const PLAN = [
      "img/Triceps_Pushdown_-_Rope_Attachment_0.jpg",
      "img/Triceps_Pushdown_-_Rope_Attachment_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=prostowanie%20ramion%20z%20lin%C4%85%20wyci%C4%85g%20technika"
+    "yt": "https://www.youtube.com/results?search_query=prostowanie%20ramion%20z%20lin%C4%85%20wyci%C4%85g%20technika",
+    "startKg": 25,
+    "krok": 2.5,
+    "znane": {
+     "data": "2026-11-02",
+     "serie": [
+      {
+       "kg": 25,
+       "powt": 10
+      },
+      {
+       "kg": 25,
+       "powt": 10
+      }
+     ],
+     "ocena": "ok"
+    }
    },
    {
     "id": "uginanie-ramion-mlotkowe-z-hantlami",
@@ -145,7 +259,24 @@ export const PLAN = [
      "img/Hammer_Curls_0.jpg",
      "img/Hammer_Curls_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=uginanie%20m%C5%82otkowe%20z%20hantlami%20technika"
+    "yt": "https://www.youtube.com/results?search_query=uginanie%20m%C5%82otkowe%20z%20hantlami%20technika",
+    "startKg": 12.5,
+    "krok": 2.5,
+    "hantle": true,
+    "znane": {
+     "data": "2026-11-02",
+     "serie": [
+      {
+       "kg": 12.5,
+       "powt": 8
+      },
+      {
+       "kg": 12.5,
+       "powt": 8
+      }
+     ],
+     "ocena": "ciezko"
+    }
    },
    {
     "id": "brzuch-spiecia-na-wyciagu",
@@ -158,7 +289,27 @@ export const PLAN = [
      "img/Cable_Crunch_0.jpg",
      "img/Cable_Crunch_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=spi%C4%99cia%20brzucha%20na%20wyci%C4%85gu%20technika"
+    "yt": "https://www.youtube.com/results?search_query=spi%C4%99cia%20brzucha%20na%20wyci%C4%85gu%20technika",
+    "startKg": 25,
+    "krok": 2.5,
+    "znane": {
+     "data": "2026-11-02",
+     "serie": [
+      {
+       "kg": 25,
+       "powt": 10
+      },
+      {
+       "kg": 25,
+       "powt": 10
+      },
+      {
+       "kg": 25,
+       "powt": 10
+      }
+     ],
+     "ocena": "ok"
+    }
    }
   ],
   "naKoniec": "Marsz na bieżni pod górkę, 15-25 min, tak żebyś mógł rozmawiać."
@@ -200,7 +351,9 @@ export const PLAN = [
      "img/Leg_Press_0.jpg",
      "img/Leg_Press_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=wypychanie%20na%20suwnicy%20technika"
+    "yt": "https://www.youtube.com/results?search_query=wypychanie%20na%20suwnicy%20technika",
+    "startKg": 60,
+    "krok": 2.5
    },
    {
     "id": "martwy-ciag-rumunski-z-hantlami",
@@ -213,10 +366,13 @@ export const PLAN = [
      "img/Romanian_Deadlift_0.jpg",
      "img/Romanian_Deadlift_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=martwy%20ci%C4%85g%20rumu%C5%84ski%20z%20hantlami%20technika"
+    "yt": "https://www.youtube.com/results?search_query=martwy%20ci%C4%85g%20rumu%C5%84ski%20z%20hantlami%20technika",
+    "startKg": 12.5,
+    "krok": 2.5,
+    "hantle": true
    },
    {
-    "id": "uginanie-nog-na-maszynie",
+    "id": "uginanie-nog-na-maszynie-seated-leg-curl",
     "nazwa": "Uginanie nóg na maszynie",
     "cel": "2 x 10-15",
     "przerwa": "90 s",
@@ -226,7 +382,9 @@ export const PLAN = [
      "img/Seated_Leg_Curl_0.jpg",
      "img/Seated_Leg_Curl_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=uginanie%20n%C3%B3g%20na%20maszynie%20siedz%C4%85c%20technika"
+    "yt": "https://www.youtube.com/results?search_query=uginanie%20n%C3%B3g%20na%20maszynie%20siedz%C4%85c%20technika",
+    "startKg": 25,
+    "krok": 2.5
    },
    {
     "id": "wspiecia-na-palce",
@@ -239,7 +397,10 @@ export const PLAN = [
      "img/Standing_Calf_Raises_0.jpg",
      "img/Standing_Calf_Raises_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=wspi%C4%99cia%20na%20palce%20technika"
+    "yt": "https://www.youtube.com/results?search_query=wspi%C4%99cia%20na%20palce%20technika",
+    "startKg": 40,
+    "krok": 2.5,
+    "startUwaga": "na maszynie"
    },
    {
     "id": "brzuch-odwrotne-spiecia",
@@ -252,7 +413,9 @@ export const PLAN = [
      "img/Reverse_Crunch_0.jpg",
      "img/Reverse_Crunch_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=odwrotne%20spi%C4%99cia%20brzucha%20technika"
+    "yt": "https://www.youtube.com/results?search_query=odwrotne%20spi%C4%99cia%20brzucha%20technika",
+    "startKg": 0,
+    "krok": 2.5
    },
    {
     "id": "brzuch-deska",
@@ -265,7 +428,9 @@ export const PLAN = [
      "img/Plank_0.jpg",
      "img/Plank_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=deska%20plank%20technika"
+    "yt": "https://www.youtube.com/results?search_query=deska%20plank%20technika",
+    "startKg": 0,
+    "krok": 2.5
    }
   ],
   "naKoniec": ""
@@ -337,7 +502,10 @@ export const PLAN = [
      "img/Incline_Dumbbell_Press_0.jpg",
      "img/Incline_Dumbbell_Press_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=wyciskanie%20hantli%20na%20%C5%82awce%20sko%C5%9Bnej%20technika"
+    "yt": "https://www.youtube.com/results?search_query=wyciskanie%20hantli%20na%20%C5%82awce%20sko%C5%9Bnej%20technika",
+    "startKg": 17.5,
+    "krok": 2.5,
+    "hantle": true
    },
    {
     "id": "wioslowanie-z-podparciem-klatki",
@@ -350,7 +518,11 @@ export const PLAN = [
      "img/Dumbbell_Incline_Row_0.jpg",
      "img/Dumbbell_Incline_Row_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=wios%C5%82owanie%20z%20podparciem%20klatki%20technika"
+    "yt": "https://www.youtube.com/results?search_query=wios%C5%82owanie%20z%20podparciem%20klatki%20technika",
+    "startKg": 15,
+    "krok": 2.5,
+    "hantle": true,
+    "startUwaga": "hantle; na maszynie ok. 30 kg"
    },
    {
     "id": "sciaganie-drazka-chwytem-neutralnym",
@@ -363,7 +535,9 @@ export const PLAN = [
      "img/Close-Grip_Front_Lat_Pulldown_0.jpg",
      "img/Close-Grip_Front_Lat_Pulldown_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=%C5%9Bci%C4%85ganie%20dr%C4%85%C5%BCka%20chwytem%20neutralnym%20technika"
+    "yt": "https://www.youtube.com/results?search_query=%C5%9Bci%C4%85ganie%20dr%C4%85%C5%BCka%20chwytem%20neutralnym%20technika",
+    "startKg": 30,
+    "krok": 2.5
    },
    {
     "id": "odwrotne-rozpietki-na-maszynie",
@@ -376,7 +550,9 @@ export const PLAN = [
      "img/Reverse_Machine_Flyes_0.jpg",
      "img/Reverse_Machine_Flyes_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=odwrotne%20rozpi%C4%99tki%20maszyna%20technika"
+    "yt": "https://www.youtube.com/results?search_query=odwrotne%20rozpi%C4%99tki%20maszyna%20technika",
+    "startKg": 20,
+    "krok": 2.5
    },
    {
     "id": "unoszenie-ramienia-bokiem-na-wyciagu",
@@ -389,7 +565,9 @@ export const PLAN = [
      "img/Cable_Seated_Lateral_Raise_0.jpg",
      "img/Cable_Seated_Lateral_Raise_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=unoszenie%20ramienia%20bokiem%20na%20wyci%C4%85gu%20technika"
+    "yt": "https://www.youtube.com/results?search_query=unoszenie%20ramienia%20bokiem%20na%20wyci%C4%85gu%20technika",
+    "startKg": 2.5,
+    "krok": 1.25
    },
    {
     "id": "uginanie-ramion-z-hantlami",
@@ -402,7 +580,10 @@ export const PLAN = [
      "img/Dumbbell_Bicep_Curl_0.jpg",
      "img/Dumbbell_Bicep_Curl_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=uginanie%20ramion%20z%20hantlami%20technika"
+    "yt": "https://www.youtube.com/results?search_query=uginanie%20ramion%20z%20hantlami%20technika",
+    "startKg": 10,
+    "krok": 2.5,
+    "hantle": true
    },
    {
     "id": "prostowanie-ramion-nad-glowa-na-wyciagu",
@@ -415,7 +596,9 @@ export const PLAN = [
      "img/Cable_Rope_Overhead_Triceps_Extension_0.jpg",
      "img/Cable_Rope_Overhead_Triceps_Extension_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=prostowanie%20ramion%20nad%20g%C5%82ow%C4%85%20wyci%C4%85g%20technika"
+    "yt": "https://www.youtube.com/results?search_query=prostowanie%20ramion%20nad%20g%C5%82ow%C4%85%20wyci%C4%85g%20technika",
+    "startKg": 15,
+    "krok": 2.5
    },
    {
     "id": "brzuch-dead-bug",
@@ -428,7 +611,9 @@ export const PLAN = [
      "img/Dead_Bug_0.jpg",
      "img/Dead_Bug_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=dead%20bug%20technika"
+    "yt": "https://www.youtube.com/results?search_query=dead%20bug%20technika",
+    "startKg": 0,
+    "krok": 2.5
    },
    {
     "id": "face-pull-jesli-masz-sile",
@@ -441,7 +626,9 @@ export const PLAN = [
      "img/Face_Pull_0.jpg",
      "img/Face_Pull_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=face%20pull%20technika"
+    "yt": "https://www.youtube.com/results?search_query=face%20pull%20technika",
+    "startKg": 15,
+    "krok": 2.5
    }
   ],
   "naKoniec": "Marsz na bieżni pod górkę, 15-25 min, tak żebyś mógł rozmawiać."
@@ -483,7 +670,9 @@ export const PLAN = [
      "img/Goblet_Squat_0.jpg",
      "img/Goblet_Squat_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=przysiad%20goblet%20technika"
+    "yt": "https://www.youtube.com/results?search_query=przysiad%20goblet%20technika",
+    "startKg": 12.5,
+    "krok": 2.5
    },
    {
     "id": "hip-thrust",
@@ -496,7 +685,9 @@ export const PLAN = [
      "img/Barbell_Hip_Thrust_0.jpg",
      "img/Barbell_Hip_Thrust_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=hip%20thrust%20technika"
+    "yt": "https://www.youtube.com/results?search_query=hip%20thrust%20technika",
+    "startKg": 40,
+    "krok": 2.5
    },
    {
     "id": "prostowanie-nog-na-maszynie",
@@ -509,10 +700,12 @@ export const PLAN = [
      "img/Leg_Extensions_0.jpg",
      "img/Leg_Extensions_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=prostowanie%20n%C3%B3g%20na%20maszynie%20technika"
+    "yt": "https://www.youtube.com/results?search_query=prostowanie%20n%C3%B3g%20na%20maszynie%20technika",
+    "startKg": 25,
+    "krok": 2.5
    },
    {
-    "id": "uginanie-nog-na-maszynie",
+    "id": "uginanie-nog-na-maszynie-lying-leg-curls",
     "nazwa": "Uginanie nóg na maszynie",
     "cel": "3 x 10-15",
     "przerwa": "90 s",
@@ -522,7 +715,9 @@ export const PLAN = [
      "img/Lying_Leg_Curls_0.jpg",
      "img/Lying_Leg_Curls_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=uginanie%20n%C3%B3g%20na%20maszynie%20le%C5%BC%C4%85c%20technika"
+    "yt": "https://www.youtube.com/results?search_query=uginanie%20n%C3%B3g%20na%20maszynie%20le%C5%BC%C4%85c%20technika",
+    "startKg": 25,
+    "krok": 2.5
    },
    {
     "id": "wspiecia-na-palce-siedzac",
@@ -535,7 +730,9 @@ export const PLAN = [
      "img/Seated_Calf_Raise_0.jpg",
      "img/Seated_Calf_Raise_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=wspi%C4%99cia%20na%20palce%20siedz%C4%85c%20technika"
+    "yt": "https://www.youtube.com/results?search_query=wspi%C4%99cia%20na%20palce%20siedz%C4%85c%20technika",
+    "startKg": 20,
+    "krok": 2.5
    },
    {
     "id": "brzuch-unoszenie-kolan-w-podporze",
@@ -548,7 +745,9 @@ export const PLAN = [
      "img/Hanging_Leg_Raise_0.jpg",
      "img/Hanging_Leg_Raise_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=unoszenie%20kolan%20w%20podporze%20technika"
+    "yt": "https://www.youtube.com/results?search_query=unoszenie%20kolan%20w%20podporze%20technika",
+    "startKg": 0,
+    "krok": 2.5
    },
    {
     "id": "brzuch-deska-bokiem",
@@ -561,9 +760,12 @@ export const PLAN = [
      "img/Side_Bridge_0.jpg",
      "img/Side_Bridge_1.jpg"
     ],
-    "yt": "https://www.youtube.com/results?search_query=deska%20bokiem%20technika"
+    "yt": "https://www.youtube.com/results?search_query=deska%20bokiem%20technika",
+    "startKg": 0,
+    "krok": 2.5
    }
   ],
   "naKoniec": ""
  }
 ];
+export const START_TRENINGU = "2026-11-02";

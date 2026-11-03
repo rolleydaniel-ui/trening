@@ -148,60 +148,76 @@ a { color: var(--przerwa); }
 .ostatnio b { color: var(--tekst); font-weight: 500; }
 .wskazowka { font-size: 14px; color: var(--akcent); margin: 0 0 16px; }
 
-.serie { margin: 8px 0 12px; }
-.seria { display: flex; align-items: center; gap: 12px; padding: 0 12px; min-height: 52px; background: var(--karta); border-radius: 12px; margin-bottom: 6px; width: 100%; text-align: left; }
-.seria .nr { width: 26px; height: 26px; border-radius: 50%; background: var(--akcent); color: var(--akcent-tekst); font-size: 13px; font-weight: 700; display: grid; place-items: center; flex: none; }
-.seria .w { flex: 1; font-size: 18px; font-weight: 600; }
-.seria .w small { font-size: 14px; color: var(--szary); font-weight: 400; }
-.seria .ed { color: var(--ciemny); font-size: 13px; }
-
-.wpis { background: var(--karta); border-radius: var(--r); padding: 14px; border: 1.5px solid var(--linia); }
-.wpis h4 { margin: 0 0 10px; font-size: 14px; color: var(--szary); font-weight: 500; display: flex; justify-content: space-between; }
-.wpis.edycja { border-color: var(--przerwa); }
-.pole { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.pole:last-of-type { margin-bottom: 0; }
-.pole label { width: 52px; font-size: 13px; color: var(--szary); text-transform: uppercase; letter-spacing: .6px; }
-.krok { width: 58px; height: 58px; border-radius: 14px; background: var(--karta2); font-size: 26px; font-weight: 500; flex: none; }
-.pole input {
-  flex: 1; min-width: 0; height: 58px; text-align: center; font-size: 30px; font-weight: 700;
-  background: var(--tlo); border: 1.5px solid var(--linia); border-radius: 14px; outline: none;
-  -moz-appearance: textfield;
+/* Propozycja ciężaru: jedno tapnięcie wstawia do nieodhaczonych serii */
+.propozycja {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; min-height: 64px;
+  background: #16200d; border: 1.5px solid #3b5a14; border-radius: 14px; padding: 10px 12px; margin: 4px 0 6px;
 }
-.pole input:focus { border-color: var(--akcent); }
-.pole input::-webkit-outer-spin-button, .pole input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.szybkie { display: flex; gap: 6px; margin: -2px 0 12px 60px; }
-.szybkie button { flex: 1; height: 34px; border-radius: 10px; background: var(--karta2); font-size: 13px; color: var(--szary); }
-.wpis .akcje { display: flex; gap: 8px; margin-top: 12px; }
+.propozycja .pr-tekst { flex: 1; min-width: 0; }
+.propozycja small { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--akcent); font-weight: 600; }
+.propozycja b { display: block; font-size: 20px; font-weight: 700; margin: 1px 0; }
+.propozycja .pr-tekst > span { display: block; font-size: 13px; color: var(--szary); line-height: 1.3; }
+.propozycja .pr-przycisk { flex: none; min-width: 72px; height: 44px; border-radius: 12px; background: var(--akcent); color: var(--akcent-tekst); font-weight: 700; display: grid; place-items: center; }
+.propozycja.wstawiona { background: var(--karta); border-color: var(--linia); }
+.propozycja.wstawiona .pr-przycisk { background: transparent; color: var(--akcent); }
+.propozycja.start { border-style: dashed; }
+.propozycja.start small { color: var(--ciezko); }
+
+/* Wiersze serii: nr | kg | powt | odhacz, pod spodem -/+ (tylko w nieodhaczonych) */
+.serie { margin: 10px 0 8px; }
+.naglowki, .wiersz { display: grid; grid-template-columns: 30px 1fr 1fr 56px; column-gap: 8px; align-items: center; }
+.naglowki { padding: 0 10px 6px; font-size: 12px; color: var(--ciemny); text-transform: uppercase; letter-spacing: .6px; }
+.naglowki span:nth-child(2), .naglowki span:nth-child(3), .naglowki span:nth-child(4) { text-align: center; }
+.wiersz { background: var(--karta); border-radius: 14px; padding: 8px 10px; margin-bottom: 8px; row-gap: 8px; border: 1.5px solid transparent; }
+.wiersz.akt { border-color: var(--akcent); background: #1a1f16; }
+.wiersz .nr { width: 30px; height: 30px; border-radius: 50%; background: var(--karta2); color: var(--szary); font-size: 14px; font-weight: 700; display: grid; place-items: center; }
+.wiersz.akt .nr { background: var(--akcent); color: var(--akcent-tekst); }
+.liczba {
+  width: 100%; min-width: 0; height: 56px; text-align: center; font-size: 26px; font-weight: 700;
+  background: var(--tlo); border: 1.5px solid var(--linia); border-radius: 12px; outline: none; padding: 0 4px;
+  -webkit-user-select: text; user-select: text;
+}
+.liczba:focus { border-color: var(--akcent); }
+.ptak { width: 56px; height: 56px; border-radius: 14px; background: var(--karta2); color: var(--ciemny); font-size: 26px; font-weight: 700; }
+.wiersz.z .ptak { background: var(--akcent); color: var(--akcent-tekst); }
+.wiersz.z { background: #141a0e; }
+.wiersz.z .liczba { background: transparent; border-color: transparent; font-size: 22px; height: 44px; color: #d9e8bd; }
+.wiersz.z .nr { background: #2c3d14; color: var(--akcent); }
+.kroki { display: flex; gap: 6px; }
+.kroki.kg { grid-column: 2; }
+.kroki.powt { grid-column: 3; }
+.kroki button { flex: 1; height: 48px; border-radius: 12px; background: var(--karta2); font-size: 17px; font-weight: 600; color: var(--tekst); }
+.kroki button:active, .ptak:active, .jak:active, .dodaj-serie:active, .propozycja:active { transform: scale(.96); }
+.jak { grid-column: 4; height: 48px; border-radius: 12px; background: var(--karta2); color: var(--szary); font-size: 18px; line-height: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.jak small { font-size: 11px; margin-top: 2px; }
+.rzad-serii { display: flex; gap: 8px; }
+.dodaj-serie { flex: 1; height: 48px; border-radius: 14px; border: 1.5px dashed var(--linia); color: var(--szary); font-weight: 600; }
 
 .oceny { display: flex; gap: 8px; margin: 16px 0 4px; }
-.oceny button { flex: 1; height: 46px; border-radius: 12px; background: var(--karta); color: var(--szary); font-weight: 600; border: 1.5px solid transparent; }
+.oceny button { flex: 1; height: 48px; border-radius: 12px; background: var(--karta); color: var(--szary); font-weight: 600; border: 1.5px solid transparent; }
 .oceny button.lekko.on { border-color: var(--lekko); color: var(--lekko); }
 .oceny button.ok.on { border-color: var(--ok); color: var(--ok); }
 .oceny button.ciezko.on { border-color: var(--ciezko); color: var(--ciezko); }
 .podpis { font-size: 13px; color: var(--szary); margin: 16px 0 0; }
 
-/* Duży zegar przerwy na ekranie ćwiczenia */
-.duza-przerwa { background: #0f2230; border: 1.5px solid #1f4a66; border-radius: var(--r); padding: 16px; margin-bottom: 14px; text-align: center; }
-.duza-przerwa small { color: var(--przerwa); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-.duza-przerwa .czas { font-size: 64px; font-weight: 700; line-height: 1.05; margin: 4px 0 10px; letter-spacing: -1px; }
-.duza-przerwa .akcje { display: flex; gap: 8px; }
-.duza-przerwa .akcje button { flex: 1; height: 46px; border-radius: 12px; background: rgba(92,200,255,.12); color: var(--przerwa); font-weight: 600; }
-.duza-przerwa.koniec { background: #17240c; border-color: var(--akcent); }
-.duza-przerwa.koniec small, .duza-przerwa.koniec .czas { color: var(--akcent); }
-.duza-przerwa .pasek-p { height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; margin: 0 0 12px; }
-.duza-przerwa .pasek-p i { display: block; height: 100%; background: var(--przerwa); }
-
-/* Mały pasek przerwy na innych ekranach */
+/* Przerwa: przyklejona nad dolnymi przyciskami, nie przesuwa ekranu */
+body.z-przerwa #app { padding-bottom: calc(var(--dol) + 210px); }
 .przerwa {
-  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--dol) + 88px); z-index: 30;
-  width: calc(100% - 32px); max-width: 528px; display: flex; align-items: center; gap: 10px;
-  background: #0f2230; border: 1.5px solid #1f4a66; border-radius: 16px; padding: 8px 8px 8px 16px; box-shadow: 0 8px 30px rgba(0,0,0,.5);
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--dol) + 86px); z-index: 30;
+  width: calc(100% - 32px); max-width: 528px;
+  background: #0f2230; border: 1.5px solid #1f4a66; border-radius: 16px; padding: 8px 8px 0 14px; box-shadow: 0 8px 30px rgba(0,0,0,.55); overflow: hidden;
 }
-.przerwa .czas { font-size: 24px; font-weight: 700; flex: 1; }
+.przerwa .p-gora { display: flex; align-items: center; gap: 6px; }
+.przerwa .p-tekst { flex: 1; min-width: 0; }
+.przerwa .czas { font-size: 34px; font-weight: 700; line-height: 1.05; letter-spacing: -.5px; }
 .przerwa small { color: var(--przerwa); font-size: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; }
-.przerwa button { height: 42px; padding: 0 14px; border-radius: 12px; background: rgba(92,200,255,.12); color: var(--przerwa); font-weight: 600; }
+.przerwa button { height: 48px; min-width: 52px; padding: 0 12px; border-radius: 12px; background: rgba(92,200,255,.14); color: var(--przerwa); font-weight: 700; font-size: 16px; }
+.przerwa .p-pasek { height: 4px; background: rgba(255,255,255,.08); margin: 8px -8px 0 -14px; }
+.przerwa .p-pasek i { display: block; height: 100%; background: var(--przerwa); }
 .przerwa.koniec { background: #17240c; border-color: var(--akcent); }
 .przerwa.koniec small, .przerwa.koniec .czas { color: var(--akcent); }
+.przerwa.koniec button { background: rgba(184,240,74,.16); color: var(--akcent); }
+.przerwa.koniec .p-pasek i { background: var(--akcent); }
 
 .toast span { white-space: nowrap; }
 .toast {
@@ -217,7 +233,7 @@ a { color: var(--przerwa); }
 .kafel b { display: block; font-size: 22px; font-weight: 700; }
 .kafel span { font-size: 12px; color: var(--szary); }
 .rekord { background: #17240c; border: 1.5px solid #3b5a14; color: var(--akcent); border-radius: 12px; padding: 10px 12px; margin-bottom: 6px; font-size: 15px; }
-.tekst-podsumowania { white-space: pre-wrap; background: var(--karta); border-radius: var(--r); padding: 14px; font-size: 14px; color: #cfd3d9; margin: 0 0 12px; font-family: inherit; }
+.tekst-podsumowania { -webkit-user-select: text; user-select: text; white-space: pre-wrap; background: var(--karta); border-radius: var(--r); padding: 14px; font-size: 14px; color: #cfd3d9; margin: 0 0 12px; font-family: inherit; }
 textarea { width: 100%; background: var(--karta); border: 1.5px solid var(--linia); border-radius: 12px; padding: 12px; min-height: 70px; resize: vertical; outline: none; }
 textarea:focus { border-color: var(--akcent); }
 .duzy-ptak { width: 72px; height: 72px; border-radius: 50%; background: var(--akcent); color: var(--akcent-tekst); display: grid; place-items: center; font-size: 38px; margin: 12px auto 12px; }
