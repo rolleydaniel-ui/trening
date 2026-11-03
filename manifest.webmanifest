@@ -1,0 +1,15 @@
+{
+  "name": "Trening",
+  "short_name": "Trening",
+  "lang": "pl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e0f11",
+  "theme_color": "#0e0f11",
+  "icons": [
+    { "src": "ikona.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "ikona-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "ikona-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

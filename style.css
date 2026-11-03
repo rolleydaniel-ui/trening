@@ -1,0 +1,253 @@
+:root {
+  --tlo: #0e0f11;
+  --karta: #17191c;
+  --karta2: #202328;
+  --linia: #2a2e35;
+  --tekst: #f2f3f5;
+  --szary: #9aa1ab;
+  --ciemny: #6b727c;
+  --akcent: #b8f04a;
+  --akcent-tekst: #11160a;
+  --przerwa: #5cc8ff;
+  --zle: #ff6b6b;
+  --lekko: #5cc8ff;
+  --ok: #b8f04a;
+  --ciezko: #ffb547;
+  --r: 16px;
+  --gora: env(safe-area-inset-top, 0px);
+  --dol: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html { background: var(--tlo); }
+body {
+  margin: 0;
+  color: var(--tekst);
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+a { color: var(--przerwa); }
+
+#app { max-width: 560px; margin: 0 auto; padding: calc(var(--gora) + 12px) 16px calc(var(--dol) + 120px); min-height: 100vh; }
+
+/* Pasek u góry */
+.pasek { display: flex; align-items: center; gap: 12px; min-height: 44px; margin-bottom: 12px; }
+.pasek h1 { flex: 1; margin: 0; font-size: 17px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pasek .zegar { font-size: 15px; color: var(--szary); min-width: 64px; text-align: right; }
+.wstecz { min-width: 64px; height: 44px; display: inline-flex; align-items: center; gap: 4px; color: var(--szary); font-size: 15px; }
+.prawy { min-width: 64px; height: 44px; color: var(--przerwa); font-size: 15px; text-align: right; }
+.wstecz::before { content: "‹"; font-size: 28px; line-height: 1; margin-top: -3px; }
+
+/* Ekran startowy */
+.witaj { margin: 8px 0 20px; }
+.witaj small { display: block; color: var(--szary); font-size: 14px; }
+.witaj h2 { margin: 4px 0 0; font-size: 30px; line-height: 1.15; letter-spacing: -.5px; }
+.witaj p { margin: 6px 0 0; color: var(--szary); }
+
+.dni { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 16px; }
+.dzien {
+  background: var(--karta); border: 1.5px solid transparent; border-radius: 14px;
+  padding: 10px 4px; text-align: center; min-height: 64px;
+}
+.dzien b { display: block; font-size: 15px; }
+.dzien span { display: block; font-size: 12px; color: var(--szary); margin-top: 2px; }
+.dzien.wybrany { border-color: var(--akcent); background: #1c2312; }
+.dzien.zrobiony b::after { content: " ✓"; color: var(--akcent); }
+
+.podglad { background: var(--karta); border-radius: var(--r); padding: 4px 0; margin-bottom: 16px; }
+.podglad li { list-style: none; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--linia); }
+.podglad li:last-child { border-bottom: 0; }
+.podglad ul { margin: 0; padding: 0; }
+.podglad .n { flex: 1; min-width: 0; }
+.podglad .n b { display: block; font-weight: 500; font-size: 15px; }
+.podglad .n span { font-size: 13px; color: var(--szary); }
+.podglad .cel { font-size: 13px; color: var(--szary); white-space: nowrap; }
+
+.miniatura { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: #fff; flex: none; }
+.miniatura.puste { background: var(--karta2); display: grid; place-items: center; color: var(--szary); font-size: 20px; }
+
+.sekcja { display: flex; justify-content: space-between; align-items: baseline; margin: 24px 0 8px; }
+.sekcja h3 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--szary); font-weight: 600; }
+.sekcja button { color: var(--przerwa); font-size: 14px; padding: 8px 0; }
+
+/* Przyciski */
+.dolny { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 12px 16px calc(var(--dol) + 12px); background: linear-gradient(transparent, var(--tlo) 30%); }
+.dolny > div { max-width: 528px; margin: 0 auto; display: flex; gap: 10px; }
+.glowny {
+  flex: 1; min-height: 58px; border-radius: 16px; background: var(--akcent); color: var(--akcent-tekst);
+  font-size: 18px; font-weight: 700; letter-spacing: .2px; transition: transform .08s;
+}
+.glowny:active, .drugi:active, .krok:active, .dzien:active, .karta-cw:active { transform: scale(.97); }
+.drugi { min-height: 58px; padding: 0 18px; border-radius: 16px; background: var(--karta2); color: var(--tekst); font-weight: 600; font-size: 16px; }
+.drugi.pelny { flex: 1; }
+.cichy { color: var(--szary); font-size: 14px; padding: 12px 0; text-decoration: underline; text-underline-offset: 3px; }
+.zle-tekst { color: var(--zle); }
+
+/* Lista ćwiczeń w treningu */
+.postep { height: 6px; background: var(--karta2); border-radius: 3px; overflow: hidden; margin: 0 0 18px; }
+.postep i { display: block; height: 100%; background: var(--akcent); border-radius: 3px; transition: width .3s; }
+
+.karta-cw {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  background: var(--karta); border-radius: var(--r); padding: 12px; margin-bottom: 8px; border: 1.5px solid transparent;
+}
+.karta-cw .n { flex: 1; min-width: 0; color: var(--tekst); }
+.karta-cw b { display: block; font-weight: 600; font-size: 16px; line-height: 1.25; }
+.karta-cw .n > span { display: block; font-size: 13px; color: var(--szary); margin-top: 3px; }
+.karta-cw .licz { font-size: 15px; color: var(--szary); font-weight: 600; white-space: nowrap; }
+.karta-cw.trwa { border-color: var(--przerwa); }
+.karta-cw.gotowe { background: #151a10; }
+.karta-cw.gotowe .licz { color: var(--akcent); }
+.karta-cw .n > .kropki { display: flex; gap: 4px; margin-top: 7px; }
+.kropki i { display: block; width: 18px; height: 5px; border-radius: 3px; background: var(--karta2); }
+.kropki i.z { background: var(--akcent); }
+
+.rozgrzewka { background: var(--karta); border-radius: var(--r); overflow: hidden; margin-bottom: 8px; }
+.rozgrzewka summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 14px; cursor: pointer; }
+.rozgrzewka summary::-webkit-details-marker { display: none; }
+.rozgrzewka summary b { flex: 1; font-weight: 600; }
+.rozgrzewka summary span { color: var(--szary); font-size: 14px; }
+.rozgrzewka summary::after { content: "›"; color: var(--szary); font-size: 22px; transition: transform .2s; }
+.rozgrzewka[open] summary::after { transform: rotate(90deg); }
+.punkt { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-top: 1px solid var(--linia); width: 100%; text-align: left; }
+.punkt .n { flex: 1; }
+.punkt .n b { font-weight: 500; display: block; font-size: 15px; }
+.punkt .n span { color: var(--szary); font-size: 13px; }
+.ptaszek { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--ciemny); flex: none; display: grid; place-items: center; font-size: 15px; color: transparent; }
+.punkt.z .ptaszek { background: var(--akcent); border-color: var(--akcent); color: var(--akcent-tekst); }
+.punkt.z .n b { color: var(--szary); text-decoration: line-through; }
+
+.dodaj-cw { width: 100%; padding: 14px; border-radius: var(--r); border: 1.5px dashed var(--linia); color: var(--szary); margin-top: 4px; }
+
+/* Ćwiczenie */
+.anim { position: relative; aspect-ratio: 3 / 2; background: #fff; border-radius: var(--r); overflow: hidden; margin-bottom: 14px; }
+.anim img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.anim img + img { animation: klatka 1.8s steps(1) infinite; }
+@keyframes klatka { 0% { opacity: 0; } 50% { opacity: 1; } }
+.anim .yt { position: absolute; right: 10px; bottom: 10px; background: rgba(0,0,0,.72); color: #fff; text-decoration: none; font-size: 13px; padding: 7px 11px; border-radius: 20px; }
+.anim.mala { aspect-ratio: 16 / 7; }
+
+.naglowek-cw { display: flex; gap: 12px; align-items: flex-start; }
+.naglowek-cw > div { flex: 1; min-width: 0; }
+.naglowek-cw .miniatura { width: 64px; height: 64px; border-radius: 12px; }
+.glowny.dalej { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
+.glowny.dalej small { font-size: 13px; font-weight: 500; opacity: .75; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px; }
+.tytul-cw { margin: 0 0 4px; font-size: 24px; line-height: 1.2; letter-spacing: -.3px; }
+.cel-cw { color: var(--szary); font-size: 15px; margin: 0 0 12px; }
+.cel-cw b { color: var(--tekst); font-weight: 600; }
+.rada { background: var(--karta); border-radius: 12px; padding: 10px 12px; font-size: 14px; color: #cfd3d9; margin-bottom: 8px; }
+.rada summary { cursor: pointer; color: var(--szary); list-style: none; }
+.rada summary::-webkit-details-marker { display: none; }
+.rada p { margin: 8px 0 0; }
+.ostatnio { font-size: 14px; color: var(--szary); margin: 0 0 4px; }
+.ostatnio b { color: var(--tekst); font-weight: 500; }
+.wskazowka { font-size: 14px; color: var(--akcent); margin: 0 0 16px; }
+
+.serie { margin: 8px 0 12px; }
+.seria { display: flex; align-items: center; gap: 12px; padding: 0 12px; min-height: 52px; background: var(--karta); border-radius: 12px; margin-bottom: 6px; width: 100%; text-align: left; }
+.seria .nr { width: 26px; height: 26px; border-radius: 50%; background: var(--akcent); color: var(--akcent-tekst); font-size: 13px; font-weight: 700; display: grid; place-items: center; flex: none; }
+.seria .w { flex: 1; font-size: 18px; font-weight: 600; }
+.seria .w small { font-size: 14px; color: var(--szary); font-weight: 400; }
+.seria .ed { color: var(--ciemny); font-size: 13px; }
+
+.wpis { background: var(--karta); border-radius: var(--r); padding: 14px; border: 1.5px solid var(--linia); }
+.wpis h4 { margin: 0 0 10px; font-size: 14px; color: var(--szary); font-weight: 500; display: flex; justify-content: space-between; }
+.wpis.edycja { border-color: var(--przerwa); }
+.pole { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.pole:last-of-type { margin-bottom: 0; }
+.pole label { width: 52px; font-size: 13px; color: var(--szary); text-transform: uppercase; letter-spacing: .6px; }
+.krok { width: 58px; height: 58px; border-radius: 14px; background: var(--karta2); font-size: 26px; font-weight: 500; flex: none; }
+.pole input {
+  flex: 1; min-width: 0; height: 58px; text-align: center; font-size: 30px; font-weight: 700;
+  background: var(--tlo); border: 1.5px solid var(--linia); border-radius: 14px; outline: none;
+  -moz-appearance: textfield;
+}
+.pole input:focus { border-color: var(--akcent); }
+.pole input::-webkit-outer-spin-button, .pole input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.szybkie { display: flex; gap: 6px; margin: -2px 0 12px 60px; }
+.szybkie button { flex: 1; height: 34px; border-radius: 10px; background: var(--karta2); font-size: 13px; color: var(--szary); }
+.wpis .akcje { display: flex; gap: 8px; margin-top: 12px; }
+
+.oceny { display: flex; gap: 8px; margin: 16px 0 4px; }
+.oceny button { flex: 1; height: 46px; border-radius: 12px; background: var(--karta); color: var(--szary); font-weight: 600; border: 1.5px solid transparent; }
+.oceny button.lekko.on { border-color: var(--lekko); color: var(--lekko); }
+.oceny button.ok.on { border-color: var(--ok); color: var(--ok); }
+.oceny button.ciezko.on { border-color: var(--ciezko); color: var(--ciezko); }
+.podpis { font-size: 13px; color: var(--szary); margin: 16px 0 0; }
+
+/* Duży zegar przerwy na ekranie ćwiczenia */
+.duza-przerwa { background: #0f2230; border: 1.5px solid #1f4a66; border-radius: var(--r); padding: 16px; margin-bottom: 14px; text-align: center; }
+.duza-przerwa small { color: var(--przerwa); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.duza-przerwa .czas { font-size: 64px; font-weight: 700; line-height: 1.05; margin: 4px 0 10px; letter-spacing: -1px; }
+.duza-przerwa .akcje { display: flex; gap: 8px; }
+.duza-przerwa .akcje button { flex: 1; height: 46px; border-radius: 12px; background: rgba(92,200,255,.12); color: var(--przerwa); font-weight: 600; }
+.duza-przerwa.koniec { background: #17240c; border-color: var(--akcent); }
+.duza-przerwa.koniec small, .duza-przerwa.koniec .czas { color: var(--akcent); }
+.duza-przerwa .pasek-p { height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; margin: 0 0 12px; }
+.duza-przerwa .pasek-p i { display: block; height: 100%; background: var(--przerwa); }
+
+/* Mały pasek przerwy na innych ekranach */
+.przerwa {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--dol) + 88px); z-index: 30;
+  width: calc(100% - 32px); max-width: 528px; display: flex; align-items: center; gap: 10px;
+  background: #0f2230; border: 1.5px solid #1f4a66; border-radius: 16px; padding: 8px 8px 8px 16px; box-shadow: 0 8px 30px rgba(0,0,0,.5);
+}
+.przerwa .czas { font-size: 24px; font-weight: 700; flex: 1; }
+.przerwa small { color: var(--przerwa); font-size: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; }
+.przerwa button { height: 42px; padding: 0 14px; border-radius: 12px; background: rgba(92,200,255,.12); color: var(--przerwa); font-weight: 600; }
+.przerwa.koniec { background: #17240c; border-color: var(--akcent); }
+.przerwa.koniec small, .przerwa.koniec .czas { color: var(--akcent); }
+
+.toast span { white-space: nowrap; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); top: calc(var(--gora) + 12px); z-index: 40;
+  background: #2a2e35; border-radius: 14px; padding: 10px 10px 10px 16px; display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.5); max-width: calc(100% - 32px); font-size: 15px;
+}
+.toast button { color: var(--akcent); font-weight: 700; padding: 8px 10px; }
+
+/* Podsumowanie */
+.kafle { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 16px; }
+.kafel { background: var(--karta); border-radius: 14px; padding: 12px; }
+.kafel b { display: block; font-size: 22px; font-weight: 700; }
+.kafel span { font-size: 12px; color: var(--szary); }
+.rekord { background: #17240c; border: 1.5px solid #3b5a14; color: var(--akcent); border-radius: 12px; padding: 10px 12px; margin-bottom: 6px; font-size: 15px; }
+.tekst-podsumowania { white-space: pre-wrap; background: var(--karta); border-radius: var(--r); padding: 14px; font-size: 14px; color: #cfd3d9; margin: 0 0 12px; font-family: inherit; }
+textarea { width: 100%; background: var(--karta); border: 1.5px solid var(--linia); border-radius: 12px; padding: 12px; min-height: 70px; resize: vertical; outline: none; }
+textarea:focus { border-color: var(--akcent); }
+.duzy-ptak { width: 72px; height: 72px; border-radius: 50%; background: var(--akcent); color: var(--akcent-tekst); display: grid; place-items: center; font-size: 38px; margin: 12px auto 12px; }
+.srodek { text-align: center; }
+
+/* Historia */
+.wpis-hist { background: var(--karta); border-radius: var(--r); margin-bottom: 8px; overflow: hidden; }
+.wpis-hist summary { list-style: none; padding: 14px; display: flex; gap: 12px; align-items: center; cursor: pointer; }
+.wpis-hist summary::-webkit-details-marker { display: none; }
+.wpis-hist summary .n { flex: 1; }
+.wpis-hist summary b { display: block; }
+.wpis-hist summary .n { color: var(--tekst); }
+.wpis-hist summary .n > span { display: block; font-size: 13px; color: var(--szary); }
+.wpis-hist .tresc { padding: 0 14px 14px; }
+.wpis-hist .tresc pre { margin: 0 0 10px; }
+.rzad { display: flex; gap: 8px; flex-wrap: wrap; }
+.rzad .drugi { min-height: 44px; font-size: 14px; }
+.pusto { color: var(--szary); text-align: center; padding: 30px 0; }
+
+.ustawienia label.przelacznik { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--karta); border-radius: 12px; margin-bottom: 6px; }
+.ustawienia input[type=checkbox] { width: 24px; height: 24px; accent-color: var(--akcent); }
+.ustawienia select { background: var(--karta2); border: 0; border-radius: 8px; padding: 8px; color: var(--tekst); font: inherit; }
+
+dialog { background: var(--karta); color: var(--tekst); border: 0; border-radius: 20px; padding: 20px; width: calc(100% - 40px); max-width: 420px; }
+dialog::backdrop { background: rgba(0,0,0,.6); }
+dialog h3 { margin: 0 0 8px; }
+dialog p { color: var(--szary); margin: 0 0 16px; }
+dialog .rzad { flex-wrap: nowrap; }
+dialog input[type=text] { width: 100%; height: 48px; padding: 0 12px; background: var(--tlo); border: 1.5px solid var(--linia); border-radius: 12px; outline: none; margin-bottom: 8px; }
+
+@media (min-width: 600px) {
+  #app { padding-top: 28px; }
+}
